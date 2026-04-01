@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevFarm 🌾</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg0:#07090f; --bg1:#0d1117; --bg2:#161b22; --bg3:#1e242e; --bg4:#252d38;
+  --b1:#21262d; --b2:#30363d; --b3:#484f58;
+  --t1:#c9d1d9; --t2:#8b949e; --t3:#484f58;
+  --green:#39d353; --cyan:#00d4ff; --purple:#c084fc;
+  --orange:#fb923c; --red:#f85149; --yellow:#fbbf24; --blue:#60a5fa;
+  --font-mono:'JetBrains Mono',monospace;
+  --font-display:'Orbitron',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg0);color:var(--t1);font-family:var(--font-mono);font-size:13px;display:flex;flex-direction:column}
+
+#hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;height:46px;min-height:46px;
+  background:var(--bg1);border-bottom:1px solid var(--b1);
+  position:relative;z-index:50;flex-shrink:0;
+}
+.logo{font-family:var(--font-display);font-size:16px;font-weight:900;letter-spacing:3px;
+  color:var(--green);text-shadow:0 0 24px #39d35340}
+.logo em{color:var(--t3);font-weight:400;font-size:10px;font-style:normal;font-family:var(--font-mono);letter-spacing:1px}
+.hdr-right{display:flex;align-items:center;gap:20px}
+.tok-display{display:flex;align-items:center;gap:5px;font-size:14px;font-weight:700;color:var(--yellow)}
+.tok-display small{font-size:10px;font-weight:400;color:var(--t3)}
+.lvl-block{display:flex;align-items:center;gap:8px}
+.lvl-pill{background:var(--bg3);border:1px solid var(--b2);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--cyan);font-weight:700}
+.xp-outer{width:100px;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.xp-inner{height:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:3px;transition:width .4s ease}
+.xp-lbl{font-size:9px;color:var(--t3);margin-top:1px}
+.review-badge{font-size:9px;padding:2px 7px;border-radius:3px;background:#003300;border:1px solid var(--green)50;color:var(--green);animation:pblink 1s ease-in-out infinite}
+.refactor-badge{font-size:9px;padding:2px 7px;border-radius:3px;background:#001a22;border:1px solid var(--cyan)50;color:var(--cyan)}
+@keyframes pblink{0%,100%{opacity:1}50%{opacity:.5}}
+
+#app{display:flex;flex:1;overflow:hidden}
+#farm-col{flex:1;display:flex;flex-direction:column;padding:14px 14px 0;gap:10px;overflow-y:auto;overflow-x:hidden}
+#farm-col::-webkit-scrollbar{width:4px}
+#farm-col::-webkit-scrollbar-thumb{background:var(--b1);border-radius:2px}
+.section-label{font-size:9px;color:var(--t3);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px}
+
+#farm-grid{display:grid;gap:5px;max-width:540px}
+
+.plot{
+  aspect-ratio:1;border:1px solid var(--b1);border-radius:7px;
+  background:var(--bg1);cursor:pointer;
+  position:relative;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1px;
+  transition:border-color .15s,box-shadow .15s,transform .1s;
+  overflow:hidden;user-select:none;
+}
+.plot:hover{transform:scale(1.05);border-color:var(--b2)}
+.plot:active{transform:scale(.96)}
+.plot.empty{border-style:dashed}
+.plot.empty .pcursor{font-size:16px;color:var(--t3);transition:color .15s}
+.plot.empty:hover .pcursor{color:var(--t2)}
+.plot.growing{background:var(--bg2)}
+.plot.ready{background:var(--bg2);animation:glow-pulse 1.6s ease-in-out infinite}
+.plot.bugged{background:#0f0505;border-color:var(--red)!important;animation:shake .35s ease}
+@keyframes glow-pulse{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 10px 1px var(--pc,var(--green))30}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-3px)}60%{transform:translateX(3px)}}
+.pemoji{font-size:22px;line-height:1;pointer-events:none}
+.psym{font-size:8px;color:var(--t2);font-weight:500;pointer-events:none}
+.ptime{font-size:8px;color:var(--t3);pointer-events:none}
+.pbar{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--bg3)}
+.pbar-fill{height:100%;border-radius:0 2px 0 0;transition:width .2s linear}
+.plabel-ready{font-size:7px;font-weight:700;color:var(--green);letter-spacing:.8px;animation:pblink 1.2s ease-in-out infinite}
+.plabel-bug{font-size:7px;font-weight:700;color:var(--red);letter-spacing:.8px}
+
+.particle{position:fixed;pointer-events:none;font-size:12px;font-weight:700;z-index:999;animation:pfloat .9s ease forwards}
+@keyframes pfloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-55px) scale(.6)}}
+
+#sidebar{width:278px;min-width:278px;background:var(--bg1);border-left:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
+
+#seed-area{padding:10px 12px;border-bottom:1px solid var(--b1)}
+#seed-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-bottom:8px}
+.sbtn{
+  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px solid var(--b1);border-radius:6px;background:var(--bg2);
+  cursor:pointer;transition:all .15s;gap:1px;font-family:inherit;position:relative;
+}
+.sbtn:not(.slocked):hover{border-color:var(--b2);background:var(--bg3)}
+.sbtn.sactive{border-color:var(--sc,var(--green));box-shadow:0 0 8px var(--sc,var(--green))30;background:var(--bg3)}
+.sbtn.slocked{opacity:.35;cursor:not-allowed}
+.sbtn-emoji{font-size:18px}
+.sbtn-cnt{font-size:9px;font-weight:700;color:var(--yellow)}
+.sbtn-lock{position:absolute;top:1px;right:2px;font-size:8px}
+.sinfo{background:var(--bg2);border:1px solid var(--b1);border-radius:6px;padding:8px 10px}
+.sinfo-name{font-size:11px;font-weight:700;margin-bottom:2px}
+.sinfo-desc{font-size:9px;color:var(--t2);font-style:italic;margin-bottom:5px}
+.sinfo-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.si{font-size:9px;color:var(--t2)}
+.si span{color:var(--t1);font-weight:500}
+
+#tabbar{display:flex;border-bottom:1px solid var(--b1)}
+.tbtn{flex:1;padding:7px 4px;background:none;border:none;border-bottom:2px solid transparent;font-family:inherit;font-size:9px;letter-spacing:.5px;color:var(--t2);cursor:pointer;transition:all .15s}
+.tbtn:hover{color:var(--t1);background:var(--bg2)}
+.tbtn.tactive{color:var(--green);border-bottom-color:var(--green)}
+
+#tabcontent{flex:1;overflow-y:auto;padding:12px}
+#tabcontent::-webkit-scrollbar{width:3px}
+#tabcontent::-webkit-scrollbar-thumb{background:var(--b1);border-radius:2px}
+.tc-label{font-size:9px;color:var(--t3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+
+.shopitem{
+  display:flex;align-items:center;gap:8px;padding:7px 9px;
+  background:var(--bg2);border:1px solid var(--b1);border-radius:6px;
+  margin-bottom:5px;cursor:pointer;transition:all .15s;
+}
+.shopitem:hover:not(.sdisabled){border-color:var(--b2);background:var(--bg3)}
+.shopitem.sdisabled{opacity:.45;cursor:not-allowed}
+.si-emoji{font-size:19px;width:26px;text-align:center}
+.si-info{flex:1}
+.si-name{font-size:11px;font-weight:600;margin-bottom:1px}
+.si-desc{font-size:9px;color:var(--t2)}
+.si-right{text-align:right}
+.si-price{font-size:11px;font-weight:700;color:var(--yellow)}
+.si-owned{font-size:9px;color:var(--t3);background:var(--bg3);border-radius:3px;padding:1px 5px;display:inline-block;margin-top:1px}
+
+.upgitem{
+  padding:9px 11px;background:var(--bg2);border:1px solid var(--b1);
+  border-radius:6px;margin-bottom:7px;cursor:pointer;transition:all .15s;
+}
+.upgitem:hover:not(.udisabled):not(.umaxed){border-color:var(--b2);background:var(--bg3)}
+.upgitem.udisabled{opacity:.4;cursor:not-allowed}
+.upgitem.umaxed{opacity:.6;cursor:default}
+.uh{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+.ue{font-size:15px}
+.un{font-size:11px;font-weight:600;flex:1}
+.udots{display:flex;gap:3px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--bg3);border:1px solid var(--b2)}
+.dot.dfilled{background:var(--green);border-color:var(--green)}
+.ud{font-size:9px;color:var(--t2);margin-bottom:5px}
+.uf{display:flex;align-items:center;justify-content:space-between}
+.ucost{font-size:10px;font-weight:700;color:var(--yellow)}
+.utag{font-size:8px;padding:2px 5px;border-radius:3px;background:var(--bg3);color:var(--t3)}
+.utag.umx{color:var(--green);border:1px solid var(--green)30}
+
+.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px}
+.statcard{background:var(--bg2);border:1px solid var(--b1);border-radius:6px;padding:9px}
+.sc-lbl{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.sc-val{font-size:17px;font-weight:700}
+
+.achv{display:flex;align-items:center;gap:9px;padding:7px 9px;background:var(--bg2);border:1px solid var(--b1);border-radius:6px;margin-bottom:5px;opacity:.4}
+.achv.adone{opacity:1;border-color:var(--yellow)40;background:#120f00}
+.av-emoji{font-size:19px}
+.av-info{flex:1}
+.av-name{font-size:11px;font-weight:600;margin-bottom:1px}
+.av-desc{font-size:9px;color:var(--t2)}
+.av-badge{font-size:8px;padding:2px 6px;border-radius:3px;background:var(--yellow)20;color:var(--yellow);font-weight:700}
+
+.rc{color:var(--t2)} .ru{color:var(--green)} .rr{color:var(--blue)} .re{color:var(--purple)} .rl{color:var(--yellow)}
+
+#notifs{position:fixed;top:54px;right:14px;z-index:1000;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.notif{padding:7px 13px;border-radius:6px;font-size:11px;font-weight:500;border:1px solid;white-space:nowrap;animation:nslide .25s ease,nfade .3s ease 2.7s forwards}
+@keyframes nslide{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes nfade{from{opacity:1}to{opacity:0}}
+.n-ok{background:#001500;border-color:var(--green)50;color:var(--green)}
+.n-err{background:#150000;border-color:var(--red)50;color:var(--red)}
+.n-info{background:#00101a;border-color:var(--cyan)50;color:var(--cyan)}
+.n-warn{background:#150a00;border-color:var(--orange)50;color:var(--orange)}
+.n-ach{background:#120f00;border-color:var(--yellow)50;color:var(--yellow)}
+
+#evbanner{position:fixed;top:50px;left:50%;transform:translateX(-50%);z-index:200;pointer-events:none}
+.evcard{
+  background:var(--bg2);border:1px solid var(--b2);border-radius:8px;
+  padding:9px 18px;display:flex;align-items:center;gap:9px;
+  animation:evdrop .35s ease,nfade .35s ease 3.65s forwards;
+  box-shadow:0 6px 24px rgba(0,0,0,.6);
+}
+@keyframes evdrop{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+.evcard.egood{border-color:var(--green)50}
+.evcard.ebad{border-color:var(--red)50}
+.ev-ico{font-size:20px}
+.ev-name{font-size:11px;font-weight:700}
+.ev-desc{font-size:10px;color:var(--t2)}
+
+#statusbar{
+  height:26px;min-height:26px;padding:0 14px;
+  background:var(--bg1);border-top:1px solid var(--b1);
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:10px;color:var(--t3);flex-shrink:0;
+}
+.prompt-g{color:var(--green)}.prompt-c{color:var(--cyan)}
+
+#welcome{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);
+}
+.wcard{
+  background:var(--bg2);border:1px solid var(--b2);border-radius:12px;
+  padding:28px 32px;max-width:440px;width:90%;text-align:center;
+}
+.wcard h2{font-family:var(--font-display);font-size:22px;font-weight:900;color:var(--green);margin-bottom:8px;letter-spacing:3px}
+.wcard p{font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:16px}
+.wcard code{font-size:11px;background:var(--bg3);border:1px solid var(--b2);padding:8px 12px;border-radius:6px;display:block;text-align:left;margin:10px 0;color:var(--t1);line-height:1.8}
+.w-start{
+  background:var(--green);color:#000;border:none;border-radius:6px;
+  padding:10px 24px;font-family:var(--font-mono);font-size:13px;font-weight:700;
+  cursor:pointer;letter-spacing:1px;transition:all .15s;
+}
+.w-start:hover{background:#4dff6e;transform:translateY(-1px)}
+</style>
+</head>
+<body>
+
+<div id="welcome">
+  <div class="wcard">
+    <h2>DEV<span style="color:var(--t2)">FARM</span></h2>
+    <p>Plante código, colha tokens. Uma fazenda para devs.</p>
+    <code>
+// Mecânicas:<br>
+&gt; Click plot vazio → planta a semente selecionada<br>
+&gt; Click plot pronto → colher e ganhar tokens<br>
+&gt; Click 🐛 → corrigir bug (ganhar tokens)<br>
+&gt; Upgrades melhoram velocidade, yield e mais<br>
+    </code>
+    <button class="w-start" onclick="closeWelcome()">npm start</button>
+  </div>
+</div>
+
+<div id="hdr">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="logo">DEV<span style="color:var(--green)">FARM</span>&nbsp;<em>// v1.0.0</em></div>
+    <div id="hdr-buffs" style="display:flex;gap:6px"></div>
+  </div>
+  <div class="hdr-right">
+    <div class="tok-display">💰 <span id="h-tok">20</span> <small>tokens</small></div>
+    <div class="lvl-block">
+      <div class="lvl-pill">LV.<span id="h-lv">1</span></div>
+      <div>
+        <div class="xp-outer"><div class="xp-inner" id="h-xp" style="width:0%"></div></div>
+        <div class="xp-lbl"><span id="h-xpcur">0</span>/<span id="h-xpmax">50</span> XP</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+  <div id="farm-col">
+    <div>
+      <div class="section-label">// farm.grid — <span id="farm-label">5×5 plots</span></div>
+      <div id="farm-grid"></div>
+    </div>
+  </div>
+
+  <div id="sidebar">
+    <div id="seed-area">
+      <div class="section-label">// seed.select</div>
+      <div id="seed-grid"></div>
+      <div id="sinfo"></div>
+    </div>
+    <div id="tabbar">
+      <button class="tbtn tactive" data-t="shop">Loja</button>
+      <button class="tbtn" data-t="upgrades">Upgrades</button>
+      <button class="tbtn" data-t="stats">Stats</button>
+      <button class="tbtn" data-t="badges">Badges</button>
+    </div>
+    <div id="tabcontent"></div>
+  </div>
+</div>
+
+<div id="statusbar">
+  <div style="display:flex;gap:6px">
+    <span class="prompt-g">devfarm</span>
+    <span class="prompt-c">~$</span>
+    <span id="status-msg">farm.init() → OK</span>
+  </div>
+  <span id="save-status">autosave ativo</span>
+</div>
+
+<div id="notifs"></div>
+<div id="evbanner"></div>
+
+<script>
+
+const CROPS = {
+  variable:  {name:'Variable', emoji:'📦', sym:'var x',  t:15,  y:8,    cost:3,   color:'#4ade80', rarity:'common',    lv:1,  desc:'let x = valor. O início de tudo.'},
+  function:  {name:'Function', emoji:'⚡', sym:'fn()',   t:35,  y:25,   cost:8,   color:'#60a5fa', rarity:'common',    lv:1,  desc:'DRY principle. Lógica reutilizável.'},
+  class:     {name:'Class',    emoji:'🏛️', sym:'class{}',t:75,  y:70,   cost:22,  color:'#c084fc', rarity:'uncommon',  lv:3,  desc:'OOP em sua forma mais pura.'},
+  api:       {name:'REST API', emoji:'🌐', sym:'GET/',   t:150, y:190,  cost:50,  color:'#fb923c', rarity:'rare',      lv:5,  desc:'Conecta serviços. Status: 200 OK.'},
+  algorithm: {name:'Algorithm',emoji:'🧮', sym:'O(n)',   t:240, y:420,  cost:100, color:'#f43f5e', rarity:'rare',      lv:7,  desc:'Big-O matters. Eficiência é tudo.'},
+  database:  {name:'Database', emoji:'🗄️', sym:'SQL',    t:400, y:900,  cost:200, color:'#22d3ee', rarity:'epic',      lv:10, desc:'Persistência real. SELECT * FROM life.'},
+  ml_model:  {name:'ML Model', emoji:'🤖', sym:'AI()',   t:720, y:2200, cost:500, color:'#a78bfa', rarity:'legendary', lv:15, desc:'model.fit(X,y). Pray to the GPU.'},
+};
+
+const UPGRADES = {
+  coffee:   {name:'Café Duplo',    emoji:'☕', desc:'+25% velocidade de crescimento por nível',  costs:[80,200,500],  max:3, effect:'speed'},
+  linter:   {name:'Linter Pro',    emoji:'🔍', desc:'-40% chance de bugs por nível',             costs:[150,400],     max:2, effect:'bugProtect'},
+  gpu:      {name:'GPU Cluster',   emoji:'💻', desc:'+50% yield em todos os crops por nível',    costs:[300,800,2000],max:3, effect:'yieldBoost'},
+  ci_cd:    {name:'CI/CD Pipeline',emoji:'🚀', desc:'Auto-harvest quando o crop matura',         costs:[600],         max:1, effect:'autoHarvest'},
+  so:       {name:'Stack Overflow',emoji:'📚', desc:'+100% XP ganho de colheitas',               costs:[600],         max:1, effect:'xpBoost'},
+  ex6:      {name:'Farm 6×6',      emoji:'📐', desc:'Expande o farm para 36 plots',              costs:[500],         max:1, effect:'expand6'},
+  ex7:      {name:'Farm 7×7',      emoji:'🗺️', desc:'Expande o farm para 49 plots',              costs:[1500],        max:1, effect:'expand7'},
+};
+
+const EVENTS = [
+  {id:'bug',    name:'🐛 Bug Detectado!',     desc:'Um bug apareceu num plot aleatório.',    type:'bad' },
+  {id:'review', name:'✅ Code Review OK!',     desc:'Próxima colheita vale 2× tokens!',      type:'good'},
+  {id:'deploy', name:'🚀 Deploy Automático!',  desc:'Todos os crops prontos são colhidos!',  type:'good'},
+  {id:'outage', name:'💀 Servidor Caiu!',      desc:'Um crop aleatório foi destruído.',       type:'bad' },
+  {id:'pr',     name:'🔀 PR Mergeado!',        desc:'Ganhou +80 tokens de bônus!',           type:'good'},
+  {id:'refactor',name:'♻️ Big Refactor!',      desc:'Crescimento 2× por 30 segundos!',       type:'good'},
+  {id:'hackathon',name:'⚡ Hackathon Mode!',   desc:'+150 tokens e XP 3× por 1 colheita!',  type:'good'},
+];
+
+const ACHIEVEMENTS = [
+  {id:'first',   name:'Hello World',   emoji:'👋', desc:'Faça sua primeira colheita',              chk:s=>s.stats.harvested>=1},
+  {id:'rich',    name:'Senior Dev',    emoji:'💰', desc:'Ganhe 1.000 tokens no total',             chk:s=>s.stats.earned>=1000},
+  {id:'full',    name:'Full Stack',    emoji:'🌾', desc:'Plante em todos os plots simultaneamente', chk:s=>s.plots.filter(p=>p.state!='empty').length>=s.farmSize},
+  {id:'debug',   name:'Exterminador',  emoji:'🦟', desc:'Corrija 10 bugs',                         chk:s=>s.stats.bugsFixed>=10},
+  {id:'aieng',   name:'AI Engineer',   emoji:'🤖', desc:'Colha seu primeiro ML Model',             chk:s=>s.stats.mlHarv>=1},
+  {id:'lv20',    name:'Ship It!',      emoji:'🎯', desc:'Alcance o nível 20',                      chk:s=>s.level>=20},
+  {id:'hoarder', name:'Token Hoarder', emoji:'🏦', desc:'Tenha 5.000 tokens simultâneos',          chk:s=>s.tokens>=5000},
+  {id:'speedrun',name:'Speedrunner',   emoji:'⚡', desc:'Colha 50 Variables',                      chk:s=>s.stats.varHarv>=50},
+  {id:'hackwon', name:'Hackathon Win', emoji:'🏆', desc:'Benefício do Hackathon ativado',          chk:s=>s.stats.hackathons>=1},
+];
+
+const mkPlot = () => ({state:'empty',crop:null,plantedAt:null,progress:0});
+const mkState = () => ({
+  tokens:20, level:1, xp:0, xpToNext:50,
+  farmSize:25, farmCols:5,
+  selectedCrop:'variable',
+  activeTab:'shop',
+  upgrades:{coffee:0,linter:0,gpu:0,ci_cd:0,so:0,ex6:0,ex7:0},
+  inv:{variable:5,function:0,class:0,api:0,algorithm:0,database:0,ml_model:0},
+  plots:Array.from({length:25},mkPlot),
+  reviewBonus:false,
+  hackathonBonus:false,
+  refactorUntil:0,
+  nextEvent:Date.now()+40000,
+  stats:{harvested:0,earned:0,bugsFixed:0,mlHarv:0,varHarv:0,planted:0,hackathons:0},
+  achievements:[],
+});
+
+let G = mkState();
+
+const speedMult = () => {
+  let m = 1 + G.upgrades.coffee * 0.25;
+  if (Date.now() < G.refactorUntil) m *= 2;
+  return m;
+};
+const yieldMult = () => 1 + G.upgrades.gpu * 0.5;
+const xpMult    = () => G.upgrades.so ? (G.hackathonBonus ? 3 : 2) : (G.hackathonBonus ? 3 : 1);
+const bugChance = () => Math.max(0.01, 0.07 - G.upgrades.linter * 0.025);
+const autoHarv  = () => G.upgrades.ci_cd >= 1;
+const unlocked  = id => G.level >= CROPS[id].lv;
+const effTime   = id => Math.max(5, Math.round(CROPS[id].t / speedMult()));
+const effYield  = id => {
+  let y = Math.round(CROPS[id].y * yieldMult());
+  if (G.reviewBonus) y *= 2;
+  if (G.hackathonBonus) y = Math.round(y * 1.5);
+  return y;
+};
+
+const $ = id => document.getElementById(id);
+const fmt = n => n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n);
+const fmtT = s => {
+  s = Math.max(0, Math.floor(s));
+  const m = Math.floor(s/60), sec = s%60;
+  return m > 0 ? `${m}m${sec.toString().padStart(2,'0')}s` : `${sec}s`;
+};
+const setStatus = msg => { $('status-msg').textContent = msg; };
+
+function save() {
+  try {
+    localStorage.setItem('devfarm3', JSON.stringify(G));
+    $('save-status').textContent = 'saved ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  } catch(e){}
+}
+function load() {
+  try {
+    const d = localStorage.getItem('devfarm3');
+    if (d) {
+      const p = JSON.parse(d);
+      G = {...mkState(), ...p};
+      while(G.plots.length < G.farmSize) G.plots.push(mkPlot());
+      G.plots = G.plots.slice(0, G.farmSize);
+    }
+  } catch(e){ G = mkState(); }
+}
+
+function notify(msg, type='info') {
+  const c = $('notifs');
+  const d = document.createElement('div');
+  d.className = `notif n-${type}`;
+  d.textContent = msg;
+  c.appendChild(d);
+  setTimeout(()=>d.remove(), 3100);
+  setStatus(msg);
+}
+
+function showEvent(ev) {
+  const b = $('evbanner');
+  b.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = `evcard e${ev.type}`;
+  card.innerHTML = `<div class="ev-ico">${ev.name.split(' ')[0]}</div><div><div class="ev-name">${ev.name}</div><div class="ev-desc">${ev.desc}</div></div>`;
+  b.appendChild(card);
+  setTimeout(()=>card.remove(), 4100);
+}
+
+function particle(el, text) {
+  const r = el.getBoundingClientRect();
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.cssText = `left:${r.left+r.width/2}px;top:${r.top+5}px;color:var(--yellow)`;
+  p.textContent = text;
+  document.body.appendChild(p);
+  setTimeout(()=>p.remove(), 950);
+}
+
+function addXp(n) {
+  G.xp += n * xpMult();
+  while (G.xp >= G.xpToNext) {
+    G.xp -= G.xpToNext;
+    G.level++;
+    G.xpToNext = Math.round(50 * Math.pow(1.45, G.level - 1));
+    notify(`🎉 Level up! Lv.${G.level}`, 'ok');
+    for (const [id,c] of Object.entries(CROPS)) {
+      if (c.lv === G.level) notify(`🔓 Desbloqueado: ${c.emoji} ${c.name}!`, 'info');
+    }
+  }
+}
+
+function checkAch() {
+  for (const a of ACHIEVEMENTS) {
+    if (!G.achievements.includes(a.id) && a.chk(G)) {
+      G.achievements.push(a.id);
+      notify(`🏆 "${a.name}" desbloqueada!`, 'ach');
+    }
+  }
+}
+
+function clickPlot(i) {
+  const p = G.plots[i];
+  const el = document.querySelector(`[data-pi="${i}"]`);
+  if (p.state === 'bugged') fixBug(i, el);
+  else if (p.state === 'ready') harvest(i, el);
+  else if (p.state === 'empty') plant(i);
+}
+
+function plant(i) {
+  const cid = G.selectedCrop;
+  if (!unlocked(cid)) { notify(`🔒 ${CROPS[cid].name} requer Lv.${CROPS[cid].lv}`, 'err'); return; }
+  if (!G.inv[cid] || G.inv[cid] <= 0) { notify(`Sem sementes de ${CROPS[cid].name}! Compre na loja.`, 'warn'); return; }
+  G.inv[cid]--;
+  G.plots[i] = {state:'growing', crop:cid, plantedAt:Date.now(), progress:0};
+  G.stats.planted++;
+  setStatus(`Plantou ${CROPS[cid].emoji} ${CROPS[cid].name}`);
+}
+
+function harvest(i, el) {
+  const p = G.plots[i];
+  if (!p.crop) return;
+  const c = CROPS[p.crop];
+  const earned = effYield(p.crop);
+  const xpGain = Math.round(c.t / 5);
+  G.tokens += earned;
+  G.stats.earned += earned;
+  G.stats.harvested++;
+  if (p.crop === 'ml_model') G.stats.mlHarv++;
+  if (p.crop === 'variable') G.stats.varHarv++;
+  if (G.reviewBonus) G.reviewBonus = false;
+  if (G.hackathonBonus) G.hackathonBonus = false;
+  addXp(xpGain);
+  G.plots[i] = mkPlot();
+  notify(`+${earned} 💰  ${c.emoji} ${c.name}`, 'ok');
+  if (el) particle(el, `+${earned}💰`);
+  checkAch();
+}
+
+function fixBug(i, el) {
+  G.plots[i] = mkPlot();
+  G.stats.bugsFixed++;
+  G.tokens += 5;
+  notify('🐛 Bug corrigido! +5 tokens', 'info');
+  if (el) particle(el, '🐛 +5💰');
+  checkAch();
+}
+
+function buySeed(cid) {
+  const c = CROPS[cid];
+  if (!unlocked(cid)) { notify(`Requer Lv.${c.lv}`, 'err'); return; }
+  if (G.tokens < c.cost) { notify(`Tokens insuficientes!`, 'err'); return; }
+  G.tokens -= c.cost;
+  G.inv[cid] = (G.inv[cid]||0) + 1;
+  notify(`Comprou ${c.emoji} ${c.name}!`, 'ok');
+  renderAll();
+}
+
+function buyUpgrade(uid) {
+  const u = UPGRADES[uid];
+  const lv = G.upgrades[uid] || 0;
+  if (lv >= u.max) { notify('Upgrade já no máximo!', 'warn'); return; }
+  const cost = u.costs[lv];
+  if (G.tokens < cost) { notify(`Precisa de ${cost} 💰`, 'err'); return; }
+  G.tokens -= cost;
+  G.upgrades[uid]++;
+
+  if ((u.effect === 'expand6') && G.upgrades[uid] >= u.max) {
+    for(let j=G.plots.length;j<36;j++) G.plots.push(mkPlot());
+    G.farmSize = 36; G.farmCols = 6;
+    notify('📐 Farm expandido para 6×6!', 'ok');
+  }
+  if ((u.effect === 'expand7') && G.upgrades[uid] >= u.max) {
+    for(let j=G.plots.length;j<49;j++) G.plots.push(mkPlot());
+    G.farmSize = 49; G.farmCols = 7;
+    notify('🗺️ Farm expandido para 7×7!', 'ok');
+  }
+  notify(`✅ ${u.emoji} ${u.name} atualizado!`, 'ok');
+  renderAll();
+}
+
+function triggerEvent() {
+  const ev = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+  applyEvent(ev);
+  showEvent(ev);
+}
+
+function applyEvent(ev) {
+  const growing = G.plots.map((_,i)=>i).filter(i=>G.plots[i].state==='growing');
+  const occupied = G.plots.map((_,i)=>i).filter(i=>G.plots[i].state!=='empty');
+
+  switch(ev.id) {
+    case 'bug':
+      if (growing.length > 0 && Math.random() < bugChance()*6) {
+        const idx = growing[Math.floor(Math.random()*growing.length)];
+        G.plots[idx].state = 'bugged';
+      }
+      break;
+    case 'review':
+      G.reviewBonus = true;
+      break;
+    case 'deploy':
+      G.plots.forEach((p,i) => {
+        if(p.state==='ready') harvest(i, document.querySelector(`[data-pi="${i}"]`));
+      });
+      break;
+    case 'outage':
+      if (occupied.length > 0) {
+        const idx = occupied[Math.floor(Math.random()*occupied.length)];
+        G.plots[idx] = mkPlot();
+        notify('💀 Servidor caiu! Crop perdido.', 'err');
+      }
+      break;
+    case 'pr':
+      G.tokens += 80;
+      G.stats.earned += 80;
+      break;
+    case 'refactor':
+      G.refactorUntil = Date.now() + 30000;
+      break;
+    case 'hackathon':
+      G.hackathonBonus = true;
+      G.tokens += 150;
+      G.stats.earned += 150;
+      G.stats.hackathons++;
+      break;
+  }
+}
+
+function renderHeader() {
+  $('h-tok').textContent = fmt(G.tokens);
+  $('h-lv').textContent = G.level;
+  $('h-xp').style.width = ((G.xp/G.xpToNext)*100)+'%';
+  $('h-xpcur').textContent = fmt(G.xp);
+  $('h-xpmax').textContent = fmt(G.xpToNext);
+
+  let buffs = '';
+  if (G.reviewBonus) buffs += `<span class="review-badge">✅ 2× review</span>`;
+  if (Date.now() < G.refactorUntil) buffs += `<span class="refactor-badge">♻️ refactor ${fmtT((G.refactorUntil-Date.now())/1000)}</span>`;
+  if (G.hackathonBonus) buffs += `<span class="review-badge">⚡ hackathon</span>`;
+  $('hdr-buffs').innerHTML = buffs;
+}
+
+function renderFarm() {
+  const grid = $('farm-grid');
+  grid.style.gridTemplateColumns = `repeat(${G.farmCols},1fr)`;
+  $('farm-label').textContent = `${G.farmCols}×${G.farmCols} plots`;
+
+  if (grid.children.length !== G.farmSize) {
+    grid.innerHTML = '';
+    for (let i = 0; i < G.farmSize; i++) {
+      const d = document.createElement('div');
+      d.className = 'plot empty';
+      d.dataset.pi = i;
+      d.onclick = ()=>clickPlot(i);
+      grid.appendChild(d);
+    }
+  }
+
+  const now = Date.now();
+  const els = grid.querySelectorAll('.plot');
+
+  els.forEach((el, i) => {
+    const p = G.plots[i];
+    const c = p.crop ? CROPS[p.crop] : null;
+
+    el.className = 'plot ' + p.state;
+    if (c) el.style.setProperty('--pc', c.color);
+
+    if (p.state === 'empty') {
+      el.innerHTML = `<div class="pcursor">+</div>`;
+      el.style.borderColor = '';
+    } else if (p.state === 'growing') {
+      const elapsed = (now - p.plantedAt) / 1000;
+      const total = effTime(p.crop);
+      const prog = Math.min(1, elapsed / total);
+      const rem = Math.max(0, total - elapsed);
+      el.innerHTML = `
+        <div class="pemoji">${c.emoji}</div>
+        <div class="psym" style="color:${c.color}">${c.sym}</div>
+        <div class="ptime">${fmtT(rem)}</div>
+        <div class="pbar"><div class="pbar-fill" style="width:${(prog*100).toFixed(1)}%;background:${c.color}"></div></div>
+      `;
+    } else if (p.state === 'ready') {
+      el.style.borderColor = c.color;
+      el.innerHTML = `
+        <div class="pemoji">${c.emoji}</div>
+        <div class="plabel-ready">COLHER</div>
+        <div class="pbar"><div class="pbar-fill" style="width:100%;background:${c.color}"></div></div>
+      `;
+    } else if (p.state === 'bugged') {
+      el.style.borderColor = '';
+      el.innerHTML = `<div class="pemoji">🐛</div><div class="plabel-bug">DEBUG!</div>`;
+    }
+  });
+}
+
+function renderSeeds() {
+  const grid = $('seed-grid');
+  grid.innerHTML = '';
+  for (const [id, c] of Object.entries(CROPS)) {
+    const locked = !unlocked(id);
+    const btn = document.createElement('div');
+    btn.className = `sbtn${G.selectedCrop===id?' sactive':''}${locked?' slocked':''}`;
+    btn.style.setProperty('--sc', c.color);
+    btn.title = c.name;
+    btn.innerHTML = `<div class="sbtn-emoji">${c.emoji}</div><div class="sbtn-cnt">${locked?'':G.inv[id]||0}</div>${locked?`<div class="sbtn-lock">🔒</div>`:''}`;
+    if (!locked) btn.onclick = ()=>{ G.selectedCrop=id; renderSeeds(); };
+    grid.appendChild(btn);
+  }
+  const c = CROPS[G.selectedCrop];
+  const lk = !unlocked(G.selectedCrop);
+  const rc = {common:'rc',uncommon:'ru',rare:'rr',epic:'re',legendary:'rl'}[c.rarity];
+  $('sinfo').innerHTML = `
+    <div class="sinfo">
+      <div class="sinfo-name" style="color:${c.color}">${c.emoji} ${c.name} <span class="${rc}" style="font-size:9px">[${c.rarity}]</span></div>
+      <div class="sinfo-desc">${c.desc}</div>
+      ${lk ? `<div style="color:var(--red);font-size:10px">🔒 Requer Lv.${c.lv}</div>` : `
+      <div class="sinfo-grid">
+        <div class="si">💰 yield: <span>${effYield(G.selectedCrop)}</span></div>
+        <div class="si">⏱ tempo: <span>${fmtT(effTime(G.selectedCrop))}</span></div>
+        <div class="si">📦 em mãos: <span>${G.inv[G.selectedCrop]||0}</span></div>
+        <div class="si">💵 custo: <span>${c.cost} tok</span></div>
+      </div>`}
+    </div>
+  `;
+}
+
+function renderTab() {
+  const tc = $('tabcontent');
+  if (G.activeTab === 'shop') {
+    let h = `<div class="tc-label">// seeds.buy()</div>`;
+    for (const [id,c] of Object.entries(CROPS)) {
+      const lk = !unlocked(id);
+      const ok = G.tokens >= c.cost && !lk;
+      h += `<div class="shopitem${ok?'':' sdisabled'}" onclick="buySeed('${id}')">
+        <div class="si-emoji">${c.emoji}</div>
+        <div class="si-info">
+          <div class="si-name" style="color:${c.color}">${c.name}</div>
+          <div class="si-desc">${lk?`🔒 Desbloqueia no Lv.${c.lv}`:c.desc}</div>
+        </div>
+        <div class="si-right">
+          <div class="si-price">💰${c.cost}</div>
+          <div class="si-owned">${G.inv[id]||0}×</div>
+        </div>
+      </div>`;
+    }
+    tc.innerHTML = h;
+  } else if (G.activeTab === 'upgrades') {
+    let h = `<div class="tc-label">// upgrades.buy()</div>`;
+    for (const [id,u] of Object.entries(UPGRADES)) {
+      const lv = G.upgrades[id]||0;
+      const maxed = lv >= u.max;
+      const nc = maxed ? null : u.costs[lv];
+      const ok = nc !== null && G.tokens >= nc;
+      let dots = '';
+      for(let i=0;i<u.max;i++) dots+=`<div class="dot${i<lv?' dfilled':''}"></div>`;
+      h += `<div class="upgitem${maxed?' umaxed':ok?'':' udisabled'}" onclick="${maxed?'':` buyUpgrade('${id}')`}">
+        <div class="uh"><div class="ue">${u.emoji}</div><div class="un">${u.name}</div><div class="udots">${dots}</div></div>
+        <div class="ud">${u.desc}</div>
+        <div class="uf">
+          <div class="ucost">${maxed?'':nc+' 💰'}</div>
+          <div class="utag${maxed?' umx':''}">${maxed?'MAXED ✓':`${lv}/${u.max}`}</div>
+        </div>
+      </div>`;
+    }
+    tc.innerHTML = h;
+  } else if (G.activeTab === 'stats') {
+    const buffs = [
+      G.reviewBonus     ? '✅ Code Review: 2× próxima colheita' : null,
+      Date.now()<G.refactorUntil ? `♻️ Refactor: 2× crescimento (${fmtT((G.refactorUntil-Date.now())/1000)})` : null,
+      G.hackathonBonus  ? '⚡ Hackathon: 1.5× yield + 3× XP' : null,
+    ].filter(Boolean);
+    tc.innerHTML = `
+      <div class="tc-label">// stats.log()</div>
+      <div class="statgrid">
+        <div class="statcard"><div class="sc-lbl">Colhitas</div><div class="sc-val" style="color:var(--green)">${fmt(G.stats.harvested)}</div></div>
+        <div class="statcard"><div class="sc-lbl">Tokens Ganhos</div><div class="sc-val" style="color:var(--yellow)">${fmt(G.stats.earned)}</div></div>
+        <div class="statcard"><div class="sc-lbl">Bugs Fixados</div><div class="sc-val" style="color:var(--red)">${G.stats.bugsFixed}</div></div>
+        <div class="statcard"><div class="sc-lbl">Plantações</div><div class="sc-val" style="color:var(--cyan)">${G.stats.planted}</div></div>
+        <div class="statcard"><div class="sc-lbl">ML Models</div><div class="sc-val" style="color:var(--purple)">${G.stats.mlHarv}</div></div>
+        <div class="statcard"><div class="sc-lbl">Nível Atual</div><div class="sc-val" style="color:var(--blue)">${G.level}</div></div>
+      </div>
+      <div class="tc-label">// active.buffs()</div>
+      ${buffs.length ? buffs.map(b=>`<div style="font-size:10px;color:var(--t2);margin-bottom:4px">${b}</div>`).join('') : '<div style="font-size:10px;color:var(--t3)">Nenhum buff ativo.</div>'}
+    `;
+  } else if (G.activeTab === 'badges') {
+    let h = `<div class="tc-label">// achievements[] — ${G.achievements.length}/${ACHIEVEMENTS.length}</div>`;
+    for (const a of ACHIEVEMENTS) {
+      const done = G.achievements.includes(a.id);
+      h += `<div class="achv${done?' adone':''}">
+        <div class="av-emoji">${a.emoji}</div>
+        <div class="av-info"><div class="av-name">${a.name}</div><div class="av-desc">${a.desc}</div></div>
+        ${done?'<div class="av-badge">✓</div>':''}
+      </div>`;
+    }
+    tc.innerHTML = h;
+  }
+}
+
+function renderAll() {
+  renderHeader();
+  renderFarm();
+  renderSeeds();
+  renderTab();
+}
+
+document.querySelectorAll('.tbtn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('tactive'));
+    btn.classList.add('tactive');
+    G.activeTab = btn.dataset.t;
+    renderTab();
+  };
+});
+
+let _lastFullRender = 0;
+
+function gameLoop() {
+  const now = Date.now();
+  let changed = false;
+
+  G.plots.forEach((p, i) => {
+    if (p.state === 'growing') {
+      const elapsed = (now - p.plantedAt) / 1000;
+      const total = effTime(p.crop);
+      const prev = p.progress;
+      p.progress = Math.min(1, elapsed / total);
+
+      if (p.progress >= 1 && prev < 1) {
+        if (autoHarv()) {
+          harvest(i, document.querySelector(`[data-pi="${i}"]`));
+        } else {
+          p.state = 'ready';
+        }
+        changed = true;
+      }
+    }
+  });
+
+  if (now >= G.nextEvent) {
+    triggerEvent();
+    G.nextEvent = now + 25000 + Math.random() * 30000;
+    changed = true;
+  }
+
+  if (changed || now - _lastFullRender > 500) {
+    renderAll();
+    _lastFullRender = now;
+  } else {
+
+    renderHeader();
+    document.querySelectorAll('.plot.growing').forEach(el => {
+      const i = parseInt(el.dataset.pi);
+      const p = G.plots[i];
+      if (!p || p.state !== 'growing') return;
+      const fill = el.querySelector('.pbar-fill');
+      const timeEl = el.querySelector('.ptime');
+      if (fill) fill.style.width = (p.progress * 100).toFixed(1) + '%';
+      if (timeEl) {
+        const elapsed = (now - p.plantedAt) / 1000;
+        timeEl.textContent = fmtT(Math.max(0, effTime(p.crop) - elapsed));
+      }
+    });
+  }
+}
+
+function closeWelcome() {
+  $('welcome').style.opacity = '0';
+  $('welcome').style.transition = 'opacity .3s';
+  setTimeout(() => $('welcome').style.display='none', 300);
+}
+
+document.addEventListener('keydown', e => {
+  const ids = Object.keys(CROPS);
+  const n = parseInt(e.key);
+  if (n >= 1 && n <= ids.length) {
+    const id = ids[n-1];
+    if (unlocked(id)) { G.selectedCrop = id; renderSeeds(); }
+  }
+  if (e.key === 'h') {
+    // Harvest all ready
+    G.plots.forEach((p,i)=>{ if(p.state==='ready') harvest(i, document.querySelector(`[data-pi="${i}"]`)); });
+    renderAll();
+  }
+});
+
+function init() {
+  load();
+  renderAll();
+  setInterval(gameLoop, 200);
+  setInterval(save, 15000);
+}
+
+init();
+</script>
+</body>
+</html>
