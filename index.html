@@ -16,8 +16,9 @@
   --font-display:'Orbitron',monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+button,input,select,textarea{font:inherit}
 html,body{height:100%;overflow:hidden}
-body{background:var(--bg0);color:var(--t1);font-family:var(--font-mono);font-size:13px;display:flex;flex-direction:column}
+body{background:var(--bg0);color:var(--t1);font-family:var(--font-mono);font-size:13px;display:flex;flex-direction:column;min-height:100vh}
 
 #hdr{
   display:flex;align-items:center;justify-content:space-between;
@@ -49,12 +50,17 @@ body{background:var(--bg0);color:var(--t1);font-family:var(--font-mono);font-siz
 #farm-grid{display:grid;gap:5px;max-width:540px}
 
 .plot{
+  appearance:none;-webkit-appearance:none;
   aspect-ratio:1;border:1px solid var(--b1);border-radius:7px;
   background:var(--bg1);cursor:pointer;
   position:relative;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:1px;
   transition:border-color .15s,box-shadow .15s,transform .1s;
   overflow:hidden;user-select:none;
+}
+.plot:focus-visible,.sbtn:focus-visible,.tbtn:focus-visible,.shopitem:focus-visible,.upgitem:focus-visible,.w-start:focus-visible{
+  outline:2px solid var(--cyan);
+  outline-offset:2px;
 }
 .plot:hover{transform:scale(1.05);border-color:var(--b2)}
 .plot:active{transform:scale(.96)}
@@ -82,6 +88,7 @@ body{background:var(--bg0);color:var(--t1);font-family:var(--font-mono);font-siz
 #seed-area{padding:10px 12px;border-bottom:1px solid var(--b1)}
 #seed-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-bottom:8px}
 .sbtn{
+  appearance:none;-webkit-appearance:none;
   aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   border:1px solid var(--b1);border-radius:6px;background:var(--bg2);
   cursor:pointer;transition:all .15s;gap:1px;font-family:inherit;position:relative;
@@ -110,6 +117,7 @@ body{background:var(--bg0);color:var(--t1);font-family:var(--font-mono);font-siz
 .tc-label{font-size:9px;color:var(--t3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
 
 .shopitem{
+  appearance:none;-webkit-appearance:none;
   display:flex;align-items:center;gap:8px;padding:7px 9px;
   background:var(--bg2);border:1px solid var(--b1);border-radius:6px;
   margin-bottom:5px;cursor:pointer;transition:all .15s;
@@ -125,6 +133,7 @@ body{background:var(--bg0);color:var(--t1);font-family:var(--font-mono);font-siz
 .si-owned{font-size:9px;color:var(--t3);background:var(--bg3);border-radius:3px;padding:1px 5px;display:inline-block;margin-top:1px}
 
 .upgitem{
+  appearance:none;-webkit-appearance:none;
   padding:9px 11px;background:var(--bg2);border:1px solid var(--b1);
   border-radius:6px;margin-bottom:7px;cursor:pointer;transition:all .15s;
 }
@@ -207,6 +216,40 @@ body{background:var(--bg0);color:var(--t1);font-family:var(--font-mono);font-siz
   cursor:pointer;letter-spacing:1px;transition:all .15s;
 }
 .w-start:hover{background:#4dff6e;transform:translateY(-1px)}
+
+@media (max-width: 980px){
+  html,body{overflow:auto}
+  body{font-size:12px}
+  #hdr{height:auto;min-height:46px;padding:10px 12px;gap:8px;flex-wrap:wrap;align-items:flex-start}
+  #hdr > div:first-child{width:100%;justify-content:space-between}
+  .hdr-right{width:100%;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  #app{flex-direction:column;overflow:visible}
+  #farm-col{padding:12px;overflow:visible}
+  #farm-grid{max-width:none;width:100%}
+  #sidebar{width:100%;min-width:0;border-left:none;border-top:1px solid var(--b1);max-height:none}
+  #seed-area{padding:10px}
+  #tabcontent{max-height:none}
+  #notifs{left:12px;right:12px;top:104px}
+  #evbanner{top:94px;left:50%;width:min(92vw,520px)}
+  .evcard{width:100%;justify-content:center;text-align:left}
+  .wcard{padding:24px 18px}
+}
+
+@media (max-width: 640px){
+  #hdr{padding:8px 10px}
+  .logo{font-size:14px;letter-spacing:2px}
+  .tok-display{font-size:12px}
+  .lvl-block{width:100%;justify-content:space-between}
+  .xp-outer{width:84px}
+  #seed-grid{grid-template-columns:repeat(3,1fr)}
+  .statgrid{grid-template-columns:1fr}
+  .sinfo-grid{grid-template-columns:1fr}
+  .plot{border-radius:6px}
+  .pemoji{font-size:20px}
+  .shopitem,.upgitem{padding:8px}
+  .wcard h2{font-size:20px}
+  .wcard p{font-size:11px}
+}
 </style>
 </head>
 <body>
@@ -651,9 +694,11 @@ function renderFarm() {
   if (grid.children.length !== G.farmSize) {
     grid.innerHTML = '';
     for (let i = 0; i < G.farmSize; i++) {
-      const d = document.createElement('div');
+      const d = document.createElement('button');
+      d.type = 'button';
       d.className = 'plot empty';
       d.dataset.pi = i;
+      d.setAttribute('aria-label', `Plot ${i + 1}`);
       d.onclick = ()=>clickPlot(i);
       grid.appendChild(d);
     }
@@ -702,10 +747,12 @@ function renderSeeds() {
   grid.innerHTML = '';
   for (const [id, c] of Object.entries(CROPS)) {
     const locked = !unlocked(id);
-    const btn = document.createElement('div');
+    const btn = document.createElement('button');
+    btn.type = 'button';
     btn.className = `sbtn${G.selectedCrop===id?' sactive':''}${locked?' slocked':''}`;
     btn.style.setProperty('--sc', c.color);
     btn.title = c.name;
+    btn.setAttribute('aria-label', `${c.name}${locked ? ' bloqueada' : ''}`);
     btn.innerHTML = `<div class="sbtn-emoji">${c.emoji}</div><div class="sbtn-cnt">${locked?'':G.inv[id]||0}</div>${locked?`<div class="sbtn-lock">🔒</div>`:''}`;
     if (!locked) btn.onclick = ()=>{ G.selectedCrop=id; renderSeeds(); };
     grid.appendChild(btn);
@@ -735,7 +782,7 @@ function renderTab() {
     for (const [id,c] of Object.entries(CROPS)) {
       const lk = !unlocked(id);
       const ok = G.tokens >= c.cost && !lk;
-      h += `<div class="shopitem${ok?'':' sdisabled'}" onclick="buySeed('${id}')">
+      h += `<button type="button" class="shopitem${ok?'':' sdisabled'}" onclick="buySeed('${id}')">
         <div class="si-emoji">${c.emoji}</div>
         <div class="si-info">
           <div class="si-name" style="color:${c.color}">${c.name}</div>
@@ -745,7 +792,7 @@ function renderTab() {
           <div class="si-price">💰${c.cost}</div>
           <div class="si-owned">${G.inv[id]||0}×</div>
         </div>
-      </div>`;
+      </button>`;
     }
     tc.innerHTML = h;
   } else if (G.activeTab === 'upgrades') {
@@ -757,14 +804,14 @@ function renderTab() {
       const ok = nc !== null && G.tokens >= nc;
       let dots = '';
       for(let i=0;i<u.max;i++) dots+=`<div class="dot${i<lv?' dfilled':''}"></div>`;
-      h += `<div class="upgitem${maxed?' umaxed':ok?'':' udisabled'}" onclick="${maxed?'':` buyUpgrade('${id}')`}">
+      h += `<button type="button" class="upgitem${maxed?' umaxed':ok?'':' udisabled'}" onclick="${maxed?'':`buyUpgrade('${id}')`}">
         <div class="uh"><div class="ue">${u.emoji}</div><div class="un">${u.name}</div><div class="udots">${dots}</div></div>
         <div class="ud">${u.desc}</div>
         <div class="uf">
           <div class="ucost">${maxed?'':nc+' 💰'}</div>
           <div class="utag${maxed?' umx':''}">${maxed?'MAXED ✓':`${lv}/${u.max}`}</div>
         </div>
-      </div>`;
+      </button>`;
     }
     tc.innerHTML = h;
   } else if (G.activeTab === 'stats') {
