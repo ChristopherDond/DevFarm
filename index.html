@@ -32,6 +32,7 @@ body{background:var(--bg0);color:var(--t1);font-family:var(--font-mono);font-siz
 .hdr-right{display:flex;align-items:center;gap:20px}
 .tok-display{display:flex;align-items:center;gap:5px;font-size:14px;font-weight:700;color:var(--yellow)}
 .tok-display small{font-size:10px;font-weight:400;color:var(--t3)}
+.rep-pill{background:var(--bg3);border:1px solid var(--b2);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--purple);font-weight:700}
 .lvl-block{display:flex;align-items:center;gap:8px}
 .lvl-pill{background:var(--bg3);border:1px solid var(--b2);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--cyan);font-weight:700}
 .xp-outer{width:100px;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
@@ -276,6 +277,7 @@ body{background:var(--bg0);color:var(--t1);font-family:var(--font-mono);font-siz
   </div>
   <div class="hdr-right">
     <div class="tok-display">💰 <span id="h-tok">20</span> <small>tokens</small></div>
+    <div class="rep-pill">REP <span id="h-rep">0</span></div>
     <div class="lvl-block">
       <div class="lvl-pill">LV.<span id="h-lv">1</span></div>
       <div>
@@ -304,6 +306,7 @@ body{background:var(--bg0);color:var(--t1);font-family:var(--font-mono);font-siz
     <div id="tabbar">
       <button class="tbtn tactive" data-t="shop">Loja</button>
       <button class="tbtn" data-t="upgrades">Upgrades</button>
+      <button class="tbtn" data-t="contracts">Contracts</button>
       <button class="tbtn" data-t="stats">Stats</button>
       <button class="tbtn" data-t="badges">Badges</button>
     </div>
@@ -339,6 +342,7 @@ const UPGRADES = {
   coffee:   {name:'Café Duplo',    emoji:'☕', desc:'+25% velocidade de crescimento por nível',  costs:[80,200,500],  max:3, effect:'speed'},
   linter:   {name:'Linter Pro',    emoji:'🔍', desc:'-40% chance de bugs por nível',             costs:[150,400],     max:2, effect:'bugProtect'},
   gpu:      {name:'GPU Cluster',   emoji:'💻', desc:'+50% yield em todos os crops por nível',    costs:[300,800,2000],max:3, effect:'yieldBoost'},
+  network:  {name:'Open Source',   emoji:'🌐', desc:'+25% recompensas dos contratos por nível',  costs:[250,700],     max:2, effect:'contractBoost'},
   ci_cd:    {name:'CI/CD Pipeline',emoji:'🚀', desc:'Auto-harvest quando o crop matura',         costs:[600],         max:1, effect:'autoHarvest'},
   so:       {name:'Stack Overflow',emoji:'📚', desc:'+100% XP ganho de colheitas',               costs:[600],         max:1, effect:'xpBoost'},
   ex6:      {name:'Farm 6×6',      emoji:'📐', desc:'Expande o farm para 36 plots',              costs:[500],         max:1, effect:'expand6'},
@@ -355,6 +359,14 @@ const EVENTS = [
   {id:'hackathon',name:'⚡ Hackathon Mode!',   desc:'+150 tokens e XP 3× por 1 colheita!',  type:'good'},
 ];
 
+const CONTRACT_POOL = [
+  {id:'var_drive',   name:'Variable Sprint',  emoji:'📦', desc:'Colha 15 Variables',                  goal:15, key:'varHarv',    rewardTok:90,  rewardXp:45,  rewardRep:1},
+  {id:'bug_hunt',    name:'Bug Hunt',         emoji:'🦟', desc:'Corrija 5 bugs',                     goal:5,  key:'bugsFixed',  rewardTok:110, rewardXp:60,  rewardRep:1},
+  {id:'plant_burst', name:'Farm Expansion',   emoji:'🌱', desc:'Faça 30 plantações',                 goal:30, key:'planted',    rewardTok:120, rewardXp:70,  rewardRep:1},
+  {id:'token_push',  name:'Deployment Budget',emoji:'💰', desc:'Ganhe 1.200 tokens no total',        goal:1200,key:'earned',     rewardTok:160, rewardXp:90,  rewardRep:2},
+  {id:'ship_ready',  name:'Ship It',          emoji:'🎯', desc:'Alcance o nível 12',                 goal:12, key:'level',       rewardTok:180, rewardXp:110, rewardRep:2},
+];
+
 const ACHIEVEMENTS = [
   {id:'first',   name:'Hello World',   emoji:'👋', desc:'Faça sua primeira colheita',              chk:s=>s.stats.harvested>=1},
   {id:'rich',    name:'Senior Dev',    emoji:'💰', desc:'Ganhe 1.000 tokens no total',             chk:s=>s.stats.earned>=1000},
@@ -365,6 +377,7 @@ const ACHIEVEMENTS = [
   {id:'hoarder', name:'Token Hoarder', emoji:'🏦', desc:'Tenha 5.000 tokens simultâneos',          chk:s=>s.tokens>=5000},
   {id:'speedrun',name:'Speedrunner',   emoji:'⚡', desc:'Colha 50 Variables',                      chk:s=>s.stats.varHarv>=50},
   {id:'hackwon', name:'Hackathon Win', emoji:'🏆', desc:'Benefício do Hackathon ativado',          chk:s=>s.stats.hackathons>=1},
+  {id:'contractor', name:'Contractor',  emoji:'📋', desc:'Complete 5 contratos',                    chk:s=>s.stats.contractsClaimed>=5},
 ];
 
 const mkPlot = () => ({state:'empty',crop:null,plantedAt:null,progress:0});
@@ -380,7 +393,11 @@ const mkState = () => ({
   hackathonBonus:false,
   refactorUntil:0,
   nextEvent:Date.now()+40000,
-  stats:{harvested:0,earned:0,bugsFixed:0,mlHarv:0,varHarv:0,planted:0,hackathons:0},
+  reputation:0,
+  contractDay:'',
+  contracts:[],
+  dailyBonusClaimed:false,
+  stats:{harvested:0,earned:0,bugsFixed:0,mlHarv:0,varHarv:0,planted:0,hackathons:0,contractsClaimed:0},
   achievements:[],
 });
 
@@ -392,13 +409,15 @@ const speedMult = () => {
   return m;
 };
 const yieldMult = () => 1 + G.upgrades.gpu * 0.5;
+const reputationMult = () => 1 + Math.min(G.reputation || 0, 20) * 0.02;
+const contractRewardMult = () => 1 + G.upgrades.network * 0.25;
 const xpMult    = () => G.upgrades.so ? (G.hackathonBonus ? 3 : 2) : (G.hackathonBonus ? 3 : 1);
 const bugChance = () => Math.max(0.01, 0.07 - G.upgrades.linter * 0.025);
 const autoHarv  = () => G.upgrades.ci_cd >= 1;
 const unlocked  = id => G.level >= CROPS[id].lv;
 const effTime   = id => Math.max(5, Math.round(CROPS[id].t / speedMult()));
 const effYield  = id => {
-  let y = Math.round(CROPS[id].y * yieldMult());
+  let y = Math.round(CROPS[id].y * yieldMult() * reputationMult());
   if (G.reviewBonus) y *= 2;
   if (G.hackathonBonus) y = Math.round(y * 1.5);
   return y;
@@ -432,8 +451,13 @@ function normalizeState(raw) {
   state.activeTab = ['shop', 'upgrades', 'stats', 'badges'].includes(state.activeTab) ? state.activeTab : base.activeTab;
   state.upgrades = { ...base.upgrades, ...(state.upgrades || {}) };
   state.inv = { ...base.inv, ...(state.inv || {}) };
+  state.reputation = Number.isFinite(state.reputation) && state.reputation >= 0 ? state.reputation : base.reputation;
+  state.contractDay = typeof state.contractDay === 'string' ? state.contractDay : base.contractDay;
+  state.dailyBonusClaimed = !!state.dailyBonusClaimed;
   state.stats = { ...base.stats, ...(state.stats || {}) };
   state.achievements = Array.isArray(state.achievements) ? state.achievements : [];
+  state.contracts = Array.isArray(state.contracts) ? state.contracts : [];
+  state.stats.contractsClaimed = Number.isFinite(state.stats.contractsClaimed) && state.stats.contractsClaimed >= 0 ? state.stats.contractsClaimed : base.stats.contractsClaimed;
   state.plots = Array.isArray(state.plots) ? state.plots : [];
 
   state.plots = state.plots.slice(0, state.farmSize).map(plot => {
@@ -484,6 +508,93 @@ function load() {
     }
   } catch(e) {}
   G = mkState();
+}
+
+function todayKey() {
+  return new Date().toDateString();
+}
+
+function hashString(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function contractValue(contract) {
+  return contract.key === 'level' ? G.level : G.stats[contract.key] || 0;
+}
+
+function buildDailyContracts(day = todayKey()) {
+  const seed = hashString(day);
+  const pool = CONTRACT_POOL.map(contract => ({ ...contract }));
+  let rng = seed || 1;
+  const nextRand = () => {
+    rng ^= rng << 13;
+    rng ^= rng >>> 17;
+    rng ^= rng << 5;
+    return (rng >>> 0) / 4294967296;
+  };
+
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(nextRand() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  return pool.slice(0, 3).map(contract => ({
+    ...contract,
+    progress: Math.min(contract.goal, contractValue(contract)),
+    claimed: false,
+  }));
+}
+
+function ensureDailyContracts(force = false) {
+  const day = todayKey();
+  if (force || G.contractDay !== day || !Array.isArray(G.contracts) || G.contracts.length !== 3) {
+    G.contractDay = day;
+    G.contracts = buildDailyContracts(day);
+    G.dailyBonusClaimed = false;
+  } else {
+    G.contracts = G.contracts.map(contract => ({
+      ...contract,
+      progress: Math.min(contract.goal, contractValue(contract)),
+      claimed: !!contract.claimed,
+    }));
+  }
+}
+
+function claimContract(index) {
+  ensureDailyContracts();
+  const contract = G.contracts[index];
+  if (!contract || contract.claimed || contract.progress < contract.goal) return;
+
+  const mult = contractRewardMult();
+  const tokens = Math.round(contract.rewardTok * mult);
+  const xp = Math.round(contract.rewardXp * mult);
+  const rep = Math.max(1, Math.round(contract.rewardRep * mult));
+
+  contract.claimed = true;
+  G.tokens += tokens;
+  G.stats.earned += tokens;
+  G.reputation += rep;
+  G.stats.contractsClaimed++;
+  addXp(xp);
+  notify(`📋 ${contract.name} concluído! +${tokens} 💰`, 'ach');
+  renderAll();
+  scheduleSave();
+
+  if (!G.dailyBonusClaimed && G.contracts.every(c => c.claimed)) {
+    G.dailyBonusClaimed = true;
+    G.tokens += 150;
+    G.stats.earned += 150;
+    G.reputation += 1;
+    addXp(100);
+    notify('🏁 Conjunto diário concluído! Bônus extra liberado.', 'ok');
+    renderAll();
+    scheduleSave();
+  }
 }
 
 function notify(msg, type='info') {
@@ -674,6 +785,7 @@ function applyEvent(ev) {
 
 function renderHeader() {
   $('h-tok').textContent = fmt(G.tokens);
+  $('h-rep').textContent = fmt(G.reputation || 0);
   $('h-lv').textContent = G.level;
   $('h-xp').style.width = ((G.xp/G.xpToNext)*100)+'%';
   $('h-xpcur').textContent = fmt(G.xp);
@@ -795,6 +907,27 @@ function renderTab() {
       </button>`;
     }
     tc.innerHTML = h;
+  } else if (G.activeTab === 'contracts') {
+    ensureDailyContracts();
+    let h = `<div class="tc-label">// daily.contracts()</div>`;
+    h += `<div style="font-size:10px;color:var(--t2);margin-bottom:8px">Reputação atual: <span style="color:var(--purple);font-weight:700">${G.reputation || 0}</span> | Bônus de contrato: <span style="color:var(--cyan);font-weight:700">${Math.round((contractRewardMult()-1)*100)}%</span></div>`;
+    G.contracts.forEach((contract, index) => {
+      const done = contract.progress >= contract.goal;
+      const pct = Math.min(100, (contract.progress / contract.goal) * 100);
+      h += `<button type="button" class="upgitem${contract.claimed ? ' umaxed' : done ? '' : ' udisabled'}" onclick="${done && !contract.claimed ? `claimContract(${index})` : ''}">
+        <div class="uh"><div class="ue">${contract.emoji}</div><div class="un">${contract.name}</div><div class="udots"><div class="dot${done ? ' dfilled' : ''}"></div></div></div>
+        <div class="ud">${contract.desc}</div>
+        <div style="height:5px;background:var(--bg3);border-radius:999px;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:999px"></div></div>
+        <div class="uf">
+          <div class="ucost">${contract.progress}/${contract.goal}</div>
+          <div class="utag${contract.claimed ? ' umx' : ''}">${contract.claimed ? `CLAIMED` : done ? `CLAIM` : `${contract.rewardTok}💰 +${contract.rewardXp}XP`}</div>
+        </div>
+      </button>`;
+    });
+    if (G.contracts.every(c => c.claimed)) {
+      h += `<div style="margin-top:8px;padding:8px 10px;border:1px solid var(--green)30;border-radius:6px;background:#001500;font-size:10px;color:var(--green)">Conjunto diário concluído. Volte amanhã para novas metas.</div>`;
+    }
+    tc.innerHTML = h;
   } else if (G.activeTab === 'upgrades') {
     let h = `<div class="tc-label">// upgrades.buy()</div>`;
     for (const [id,u] of Object.entries(UPGRADES)) {
@@ -829,6 +962,8 @@ function renderTab() {
         <div class="statcard"><div class="sc-lbl">Plantações</div><div class="sc-val" style="color:var(--cyan)">${G.stats.planted}</div></div>
         <div class="statcard"><div class="sc-lbl">ML Models</div><div class="sc-val" style="color:var(--purple)">${G.stats.mlHarv}</div></div>
         <div class="statcard"><div class="sc-lbl">Nível Atual</div><div class="sc-val" style="color:var(--blue)">${G.level}</div></div>
+        <div class="statcard"><div class="sc-lbl">Contratos</div><div class="sc-val" style="color:var(--purple)">${G.stats.contractsClaimed}</div></div>
+        <div class="statcard"><div class="sc-lbl">Reputação</div><div class="sc-val" style="color:var(--purple)">${G.reputation || 0}</div></div>
       </div>
       <div class="tc-label">// active.buffs()</div>
       ${buffs.length ? buffs.map(b=>`<div style="font-size:10px;color:var(--t2);margin-bottom:4px">${b}</div>`).join('') : '<div style="font-size:10px;color:var(--t3)">Nenhum buff ativo.</div>'}
@@ -868,6 +1003,8 @@ let _lastFullRender = 0;
 function gameLoop() {
   const now = Date.now();
   let changed = false;
+
+  ensureDailyContracts();
 
   G.plots.forEach((p, i) => {
     if (p.state === 'growing') {
@@ -928,6 +1065,13 @@ document.addEventListener('keydown', e => {
     const id = ids[n-1];
     if (unlocked(id)) { G.selectedCrop = id; renderSeeds(); }
   }
+  if (e.key === 'c') {
+    G.activeTab = 'contracts';
+    document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('tactive'));
+    const contractsTab = document.querySelector('.tbtn[data-t="contracts"]');
+    if (contractsTab) contractsTab.classList.add('tactive');
+    renderTab();
+  }
   if (e.key === 'h') {
     // Harvest all ready
     G.plots.forEach((p,i)=>{ if(p.state==='ready') harvest(i, document.querySelector(`[data-pi="${i}"]`)); });
@@ -937,6 +1081,7 @@ document.addEventListener('keydown', e => {
 
 function init() {
   load();
+  ensureDailyContracts(true);
   renderAll();
   setInterval(gameLoop, 200);
   setInterval(save, 15000);
