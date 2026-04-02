@@ -370,22 +370,77 @@ const fmtT = s => {
 };
 const setStatus = msg => { $('status-msg').textContent = msg; };
 
+const SAVE_KEY = 'devfarm3:v2';
+const SAVE_BACKUP_KEY = 'devfarm3:v2:backup';
+
+let saveTimer = null;
+
+function normalizeState(raw) {
+  const base = mkState();
+  const state = { ...base, ...(raw || {}) };
+
+  state.tokens = Number.isFinite(state.tokens) ? state.tokens : base.tokens;
+  state.level = Number.isFinite(state.level) && state.level >= 1 ? state.level : base.level;
+  state.xp = Number.isFinite(state.xp) && state.xp >= 0 ? state.xp : base.xp;
+  state.xpToNext = Number.isFinite(state.xpToNext) && state.xpToNext > 0 ? state.xpToNext : base.xpToNext;
+  state.farmSize = [25, 36, 49].includes(state.farmSize) ? state.farmSize : base.farmSize;
+  state.farmCols = [5, 6, 7].includes(state.farmCols) ? state.farmCols : base.farmCols;
+  state.selectedCrop = CROPS[state.selectedCrop] ? state.selectedCrop : base.selectedCrop;
+  state.activeTab = ['shop', 'upgrades', 'stats', 'badges'].includes(state.activeTab) ? state.activeTab : base.activeTab;
+  state.upgrades = { ...base.upgrades, ...(state.upgrades || {}) };
+  state.inv = { ...base.inv, ...(state.inv || {}) };
+  state.stats = { ...base.stats, ...(state.stats || {}) };
+  state.achievements = Array.isArray(state.achievements) ? state.achievements : [];
+  state.plots = Array.isArray(state.plots) ? state.plots : [];
+
+  state.plots = state.plots.slice(0, state.farmSize).map(plot => {
+    const next = { ...mkPlot(), ...(plot || {}) };
+    if (!['empty', 'growing', 'ready', 'bugged'].includes(next.state)) return mkPlot();
+    if (next.state !== 'empty' && !CROPS[next.crop]) return mkPlot();
+    return next;
+  });
+  while (state.plots.length < state.farmSize) state.plots.push(mkPlot());
+
+  return state;
+}
+
+function persistState() {
+  const payload = JSON.stringify(G);
+  localStorage.setItem(SAVE_KEY, payload);
+  localStorage.setItem(SAVE_BACKUP_KEY, payload);
+  $('save-status').textContent = 'saved ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
 function save() {
   try {
-    localStorage.setItem('devfarm3', JSON.stringify(G));
-    $('save-status').textContent = 'saved ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  } catch(e){}
+    persistState();
+  } catch(e) {}
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    save();
+  }, 400);
+}
+
+function flushSave() {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+  }
+  save();
 }
 function load() {
   try {
-    const d = localStorage.getItem('devfarm3');
+    const d = localStorage.getItem(SAVE_KEY) || localStorage.getItem(SAVE_BACKUP_KEY);
     if (d) {
-      const p = JSON.parse(d);
-      G = {...mkState(), ...p};
-      while(G.plots.length < G.farmSize) G.plots.push(mkPlot());
-      G.plots = G.plots.slice(0, G.farmSize);
+      G = normalizeState(JSON.parse(d));
+      return;
     }
-  } catch(e){ G = mkState(); }
+  } catch(e) {}
+  G = mkState();
 }
 
 function notify(msg, type='info') {
@@ -456,6 +511,7 @@ function plant(i) {
   G.plots[i] = {state:'growing', crop:cid, plantedAt:Date.now(), progress:0};
   G.stats.planted++;
   setStatus(`Plantou ${CROPS[cid].emoji} ${CROPS[cid].name}`);
+  scheduleSave();
 }
 
 function harvest(i, el) {
@@ -476,6 +532,7 @@ function harvest(i, el) {
   notify(`+${earned} 💰  ${c.emoji} ${c.name}`, 'ok');
   if (el) particle(el, `+${earned}💰`);
   checkAch();
+  scheduleSave();
 }
 
 function fixBug(i, el) {
@@ -485,6 +542,7 @@ function fixBug(i, el) {
   notify('🐛 Bug corrigido! +5 tokens', 'info');
   if (el) particle(el, '🐛 +5💰');
   checkAch();
+  scheduleSave();
 }
 
 function buySeed(cid) {
@@ -495,6 +553,7 @@ function buySeed(cid) {
   G.inv[cid] = (G.inv[cid]||0) + 1;
   notify(`Comprou ${c.emoji} ${c.name}!`, 'ok');
   renderAll();
+  scheduleSave();
 }
 
 function buyUpgrade(uid) {
@@ -518,6 +577,7 @@ function buyUpgrade(uid) {
   }
   notify(`✅ ${u.emoji} ${u.name} atualizado!`, 'ok');
   renderAll();
+  scheduleSave();
 }
 
 function triggerEvent() {
@@ -566,6 +626,7 @@ function applyEvent(ev) {
       G.stats.hackathons++;
       break;
   }
+  scheduleSave();
 }
 
 function renderHeader() {
@@ -788,6 +849,7 @@ function gameLoop() {
   if (changed || now - _lastFullRender > 500) {
     renderAll();
     _lastFullRender = now;
+    if (changed) scheduleSave();
   } else {
 
     renderHeader();
@@ -832,6 +894,12 @@ function init() {
   setInterval(gameLoop, 200);
   setInterval(save, 15000);
 }
+
+window.addEventListener('beforeunload', flushSave);
+window.addEventListener('pagehide', flushSave);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushSave();
+});
 
 init();
 </script>
