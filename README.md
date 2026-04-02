@@ -1,99 +1,66 @@
 # DevFarm 🌾
 
-A browser-based idle farming simulation game with a developer-themed interface. Grow virtual crops, earn tokens, unlock upgrades, and complete achievements in a sleek, dark-mode terminal-inspired environment.
+DevFarm is a browser-first idle farming game designed for developers. Plant code-themed crops, harvest tokens, and climb levels inside a slick, terminal-inspired UI that feels like a dev dashboard.
 
-## Features
+## Why it is fun
 
-- **Farming System**: Plant various crops on your farm grid and watch them grow over time
-- **Seed Collection**: Unlock and collect different seed types to plant
-- **Gamification Elements**:
-  - Experience Points (XP) and Level System
-  - Achievement Badges
-  - Progression Tracking
-- **Shop & Upgrades**: 
-  - Purchase items and powerups using earned tokens
-  - Unlock permanent upgrades to boost your farm
-  - Track item ownership and upgrade progression
-- **Statistics Dashboard**: Monitor your farm's performance with real-time stats
-- **Dynamic UI**:
-  - Real-time notifications for events and progress
-  - Plant status indicators (growing, ready, bugged)
-  - Progress bars and visual feedback
-- **Developer-Inspired Design**: 
-  - GitHub Dark theme color scheme
-  - JetBrains Mono and Orbitron fonts
-  - Responsive grid-based layout
-  - Terminal-style interface
+- **Code-flavored crops**: Variables, functions, classes, APIs, algorithms, databases, and ML models.
+- **Progression loop**: Level up, unlock rarities, and keep expanding your farm.
+- **Upgrades with impact**: Boost yield, speed, bug protection, and auto-harvest.
+- **Live events**: Random bonuses, refactors, deploys, outages, and code reviews.
+- **Dev aesthetic**: GitHub-dark palette, monospace UI, and a terminal-style layout.
 
-## Getting Started
+## Quick start
 
-### Prerequisites
-- A modern web browser (Chrome, Firefox, Safari, or Edge)
-- No additional dependencies required
-
-### Installation
-
-1. Clone the repository:
+1. Clone and open:
 ```bash
 git clone https://github.com/ChristopherDond/DevFarm.git
 cd DevFarm
 ```
 
-2. Open the application:
+2. Run locally (two options):
 ```bash
-# Simply open index.html in your browser
+# Option A: just open index.html in your browser
 ```
 
-Or use a local server:
 ```bash
+# Option B: serve locally
 python -m http.server 8000
-# Then visit http://localhost:8000
+# then visit http://localhost:8000
 ```
 
-## Usage
+## How to play
 
-- **Plant Crops**: Click on empty farm plots to select a seed and start growing
-- **Harvest**: Click on ready crops to collect them and earn tokens
-- **Buy Items**: Visit the shop to purchase seeds and items with your earnings
-- **Upgrade**: Unlock permanent upgrades to improve your farming efficiency
-- **Track Progress**: Check the achievements tab to see your accomplishments
+- **Plant**: Click an empty plot and pick a seed.
+- **Harvest**: Click ready crops to collect tokens.
+- **Fix bugs**: If a plot shows a bug, click it for rewards.
+- **Upgrade**: Buy upgrades to scale growth, yield, and automation.
+- **Track progress**: Check stats, badges, and contracts.
 
-## Project Structure
+## What is inside
 
 ```
 DevFarm/
-├── index.html          # Main application file
-├── README.md           # This file
+├── index.html          # Single-file game (HTML, CSS, JS)
+├── README.md           # Project overview
 └── .git/               # Git repository
 ```
 
-## Technologies Used
+## Tech stack
 
-- **HTML5**: Semantic markup
-- **CSS3**: 
-  - CSS Variables for theming
-  - Flexbox and Grid layouts
-  - Animations and transitions
-  - Custom scrollbar styling
-- **JavaScript**: Interactive gameplay logic (embedded in HTML)
-- **Fonts**: 
-  - JetBrains Mono (monospace)
-  - Orbitron (display)
+- **HTML5** for structure
+- **CSS3** for layout, theming, and animation
+- **JavaScript** for game logic (embedded)
+- **Fonts**: JetBrains Mono and Orbitron
 
-## Features Highlights
+## Gameplay highlights
 
-### Visual Design
-- **Dark Mode**: GitHub-inspired color palette with high contrast
-- **Smooth Animations**: Glowing effects, floating particles, and transitions
-- **Responsive Layout**: Works on various screen sizes
+- **Idle mechanics**: Growth continues with minimal input.
+- **Resource strategy**: Balance planting costs with long-term gains.
+- **Events & contracts**: Short-term challenges and rewarding bursts.
+- **Achievements**: Earn badges for milestones and mastery.
 
-### Gameplay
-- **Idle Mechanics**: Progress continues even with minimal interaction
-- **Resource Management**: Balance earning, spending, and upgrading
-- **Progression System**: Unlock new content as you level up
-- **Dynamic Events**: Random events and notifications keep the game engaging
-
-## Browser Compatibility
+## Browser support
 
 - Chrome/Chromium 90+
 - Firefox 88+
@@ -102,19 +69,12 @@ DevFarm/
 
 ## Contributing
 
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest new features
-- Submit pull requests with improvements
+Ideas and improvements are welcome. Open an issue or send a pull request.
 
 ## License
 
-This project is open source. Check the repository for license details.
-
-## Support
-
-For issues, questions, or suggestions, please open an issue on the GitHub repository.
+See [LICENSE](LICENSE).
 
 ---
 
-**Enjoy farming and growing your development skills! 🚀**
+**Enjoy the harvest, and ship it.**
