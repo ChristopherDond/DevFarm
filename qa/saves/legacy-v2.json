@@ -1,0 +1,51 @@
+{
+  "version": "2.0.0",
+  "tokens": 2120,
+  "level": 16,
+  "xp": 410,
+  "xpToNext": 2420,
+  "prestige": 1,
+  "reputation": 5,
+  "farmSize": 36,
+  "farmCols": 6,
+  "selectedCrop": "database",
+  "activeTab": "goals",
+  "settings": {
+    "volume": 0.6,
+    "sfx": true,
+    "music": false,
+    "pauseOnBlur": true,
+    "language": "pt-BR"
+  },
+  "upgrades": {
+    "coffee": 3,
+    "linter": 2,
+    "gpu": 2,
+    "network": 1,
+    "ci_cd": 1,
+    "stack": 1,
+    "expansion6": 1
+  },
+  "inv": {
+    "variable": 14,
+    "function": 12,
+    "class": 9,
+    "api": 8,
+    "algorithm": 7,
+    "database": 4
+  },
+  "goals": [
+    { "id": "lvl10", "claimed": true, "progress": 10 },
+    { "id": "lvl20", "claimed": false, "progress": 16 }
+  ],
+  "contracts": [
+    { "id": "var_drive", "goal": 15, "key": "varHarv", "progress": 15, "claimed": true },
+    { "id": "ship_ready", "goal": 12, "key": "level", "progress": 12, "claimed": false },
+    { "id": "token_push", "goal": 1200, "key": "earned", "progress": 1200, "claimed": false }
+  ],
+  "plots": [
+    { "state": "growing", "crop": "database", "plantedAt": 1743500020000, "progress": 0.8 },
+    { "state": "bugged", "crop": "api" },
+    { "state": "ready", "crop": "algorithm", "progress": 1 }
+  ]
+}

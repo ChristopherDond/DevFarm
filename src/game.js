@@ -1,4 +1,5 @@
 import { ACHIEVEMENTS, CONTRACT_POOL, CROPS, DEFAULT_SETTINGS, EVENTS, GOALS, UPGRADES, VERSION, cropDesc, cropLabel } from './data.js';
+import { migrateState } from './migrations.js';
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -132,6 +133,9 @@ export function createDefaultState() {
     contractDay: '',
     dailyBonusClaimed: false,
     lastSeen: Date.now(),
+    lastEconomyReliefAt: 0,
+    tutorialStep: 0,
+    qaVersion: 1,
     settings: { ...DEFAULT_SETTINGS },
     stats: emptyStats(),
     upgrades: emptyUpgrades(),
@@ -146,20 +150,21 @@ export function createDefaultState() {
 }
 
 export function normalizeState(raw) {
+  const migrated = migrateState(raw);
   const base = createDefaultState();
   const state = {
     ...base,
-    ...(raw || {}),
-    settings: { ...base.settings, ...(raw?.settings || {}) },
-    stats: { ...emptyStats(), ...(raw?.stats || {}) },
-    upgrades: { ...emptyUpgrades(), ...(raw?.upgrades || {}) },
-    inv: { ...emptyInventory(), ...(raw?.inv || {}) },
-    achievements: Array.isArray(raw?.achievements) ? raw.achievements.slice() : [],
-    contracts: Array.isArray(raw?.contracts) ? raw.contracts.slice() : [],
-    goals: Array.isArray(raw?.goals)
-      ? raw.goals.map(goal => ({ ...goal, claimed: !!goal.claimed, progress: Number(goal.progress) || 0 }))
+    ...(migrated || {}),
+    settings: { ...base.settings, ...(migrated?.settings || {}) },
+    stats: { ...emptyStats(), ...(migrated?.stats || {}) },
+    upgrades: { ...emptyUpgrades(), ...(migrated?.upgrades || {}) },
+    inv: { ...emptyInventory(), ...(migrated?.inv || {}) },
+    achievements: Array.isArray(migrated?.achievements) ? migrated.achievements.slice() : [],
+    contracts: Array.isArray(migrated?.contracts) ? migrated.contracts.slice() : [],
+    goals: Array.isArray(migrated?.goals)
+      ? migrated.goals.map(goal => ({ ...goal, claimed: !!goal.claimed, progress: Number(goal.progress) || 0 }))
       : base.goals.map(goal => ({ ...goal })),
-    plots: Array.isArray(raw?.plots) ? raw.plots.slice() : [],
+    plots: Array.isArray(migrated?.plots) ? migrated.plots.slice() : [],
   };
 
   state.version = VERSION;
@@ -187,6 +192,9 @@ export function normalizeState(raw) {
   state.contractDay = typeof state.contractDay === 'string' ? state.contractDay : '';
   state.dailyBonusClaimed = !!state.dailyBonusClaimed;
   state.lastSeen = Number.isFinite(state.lastSeen) ? state.lastSeen : Date.now();
+  state.lastEconomyReliefAt = Number.isFinite(state.lastEconomyReliefAt) ? state.lastEconomyReliefAt : 0;
+  state.tutorialStep = Number.isFinite(state.tutorialStep) ? state.tutorialStep : 0;
+  state.qaVersion = Number.isFinite(state.qaVersion) ? state.qaVersion : 1;
   state.status = typeof state.status === 'string' ? state.status : base.status;
 
   const plots = state.plots.slice(0, state.farmSize).map(plot => {
@@ -246,7 +254,7 @@ function awardXp(state, amount, deps) {
   while (state.xp >= state.xpToNext) {
     state.xp -= state.xpToNext;
     state.level += 1;
-    state.xpToNext = Math.round(50 * Math.pow(1.45, state.level - 1));
+    state.xpToNext = Math.round(50 * Math.pow(1.39, state.level - 1));
     leveled = true;
     deps.notify?.('ok', `Lv.${state.level}`);
     Object.values(CROPS).forEach(crop => {
@@ -295,6 +303,7 @@ export function plant(state, index, deps) {
   state.inv[cropId] -= 1;
   state.plots[index] = { state: 'growing', crop: cropId, plantedAt: Date.now(), progress: 0 };
   state.stats.planted += 1;
+  if (state.tutorialStep < 1) state.tutorialStep = 1;
   state.status = `${cropLabel(crop, state.settings.language)} planted`;
   deps.play?.('plant');
 }
@@ -310,6 +319,7 @@ export function harvest(state, index, deps) {
   state.stats.harvested += 1;
   if (plot.crop === 'ml_model') state.stats.mlHarv += 1;
   if (plot.crop === 'variable') state.stats.varHarv += 1;
+  if (state.tutorialStep < 2) state.tutorialStep = 2;
   state.plots[index] = createPlot();
   state.reviewBonus = false;
   state.hackathonBonus = false;
@@ -341,6 +351,7 @@ export function buySeed(state, cropId, deps) {
   }
   state.tokens -= crop.cost;
   state.inv[cropId] = (state.inv[cropId] || 0) + 1;
+  if (state.tutorialStep < 3) state.tutorialStep = 3;
   state.status = `Bought ${cropLabel(crop, state.settings.language)}`;
   deps.play?.('buy');
 }
@@ -370,6 +381,7 @@ export function buyUpgrade(state, upgradeId, deps) {
   }
   state.tokens -= cost;
   state.upgrades[upgradeId] = current + 1;
+  if (state.tutorialStep < 4) state.tutorialStep = 4;
   state.status = `${upgradeLabel(upgrade, state.settings.language)} upgraded`;
   deps.play?.('buy');
 
@@ -519,6 +531,25 @@ export function closeMenu(state) {
 
 export function dismissTutorial(state) {
   state.tutorialDismissed = true;
+  state.tutorialStep = Math.max(4, state.tutorialStep || 0);
+}
+
+export function getTutorialProgress(state) {
+  return Math.max(0, Math.min(4, Number(state.tutorialStep) || 0));
+}
+
+function maybeGrantEconomyRelief(state, deps, now) {
+  const seedStock = Object.values(state.inv || {}).reduce((acc, qty) => acc + (Number(qty) || 0), 0);
+  const needsRelief = state.level >= 6 && state.level <= 16 && state.tokens < 25 && seedStock <= 1;
+  if (!needsRelief) return false;
+  if (now - state.lastEconomyReliefAt < 120000) return false;
+
+  const bonus = Math.round(20 + state.level * 3);
+  state.tokens += bonus;
+  state.stats.earned += bonus;
+  state.lastEconomyReliefAt = now;
+  deps.notify?.('info', `Budget patch: +${bonus} tokens`);
+  return true;
 }
 
 export function setLanguage(state, language) {
@@ -544,6 +575,10 @@ export function applySaveTimestamp(state) {
 export function tick(state, deps, now = Date.now()) {
   let changed = false;
   refreshDerivedState(state);
+
+  if (maybeGrantEconomyRelief(state, deps, now)) {
+    changed = true;
+  }
 
   state.plots.forEach((plot, index) => {
     if (plot.state !== 'growing') return;

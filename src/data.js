@@ -1,18 +1,18 @@
-export const VERSION = '2.0.0';
+export const VERSION = '2.1.0';
 
 export const CROPS = {
-  variable: { name: { 'pt-BR': 'Variável', en: 'Variable' }, emoji: '📦', sym: 'var x', t: 15, y: 8, cost: 3, color: '#4ade80', rarity: 'common', lv: 1, desc: { 'pt-BR': 'let x = valor. O início de tudo.', en: 'let x = value. The start of it all.' } },
-  function: { name: { 'pt-BR': 'Função', en: 'Function' }, emoji: '⚡', sym: 'fn()', t: 35, y: 25, cost: 8, color: '#60a5fa', rarity: 'common', lv: 1, desc: { 'pt-BR': 'DRY principle. Lógica reutilizável.', en: 'DRY principle. Reusable logic.' } },
-  class: { name: { 'pt-BR': 'Classe', en: 'Class' }, emoji: '🏛️', sym: 'class{}', t: 75, y: 70, cost: 22, color: '#c084fc', rarity: 'uncommon', lv: 3, desc: { 'pt-BR': 'OOP em sua forma clássica.', en: 'OOP in its classic form.' } },
-  api: { name: { 'pt-BR': 'API REST', en: 'REST API' }, emoji: '🌐', sym: 'GET/', t: 150, y: 190, cost: 50, color: '#fb923c', rarity: 'rare', lv: 5, desc: { 'pt-BR': 'Conecta serviços. Status: 200 OK.', en: 'Connects services. Status: 200 OK.' } },
-  algorithm: { name: { 'pt-BR': 'Algoritmo', en: 'Algorithm' }, emoji: '🧮', sym: 'O(n)', t: 240, y: 420, cost: 100, color: '#f43f5e', rarity: 'rare', lv: 7, desc: { 'pt-BR': 'Big-O importa. Eficiência é tudo.', en: 'Big-O matters. Efficiency is everything.' } },
-  database: { name: { 'pt-BR': 'Banco', en: 'Database' }, emoji: '🗄️', sym: 'SQL', t: 400, y: 900, cost: 200, color: '#22d3ee', rarity: 'epic', lv: 10, desc: { 'pt-BR': 'Persistência real. SELECT * FROM life.', en: 'Real persistence. SELECT * FROM life.' } },
-  ml_model: { name: { 'pt-BR': 'Modelo ML', en: 'ML Model' }, emoji: '🤖', sym: 'AI()', t: 720, y: 2200, cost: 500, color: '#a78bfa', rarity: 'legendary', lv: 15, desc: { 'pt-BR': 'model.fit(X,y). Reze ao GPU.', en: 'model.fit(X,y). Pray to the GPU.' } },
-  cache: { name: { 'pt-BR': 'Cache', en: 'Cache' }, emoji: '🧠', sym: 'L1', t: 120, y: 160, cost: 40, color: '#34d399', rarity: 'rare', lv: 4, desc: { 'pt-BR': 'Latência baixa, throughput alto.', en: 'Low latency, high throughput.' } },
-  microservice: { name: { 'pt-BR': 'Microserviço', en: 'Microservice' }, emoji: '🧩', sym: 'svc', t: 180, y: 260, cost: 65, color: '#38bdf8', rarity: 'rare', lv: 6, desc: { 'pt-BR': 'Escala horizontal e complexidade vertical.', en: 'Horizontal scale, vertical complexity.' } },
-  shader: { name: { 'pt-BR': 'Shader', en: 'Shader' }, emoji: '✨', sym: 'GLSL', t: 300, y: 500, cost: 110, color: '#f472b6', rarity: 'epic', lv: 8, desc: { 'pt-BR': 'Brilho, partículas e custo de GPU.', en: 'Glow, particles, and GPU cost.' } },
-  docker: { name: { 'pt-BR': 'Docker', en: 'Docker' }, emoji: '🐳', sym: 'img', t: 360, y: 620, cost: 140, color: '#0ea5e9', rarity: 'epic', lv: 9, desc: { 'pt-BR': 'Empacota tudo e chama de portátil.', en: 'Packages everything and calls it portable.' } },
-  ai_agent: { name: { 'pt-BR': 'Agente IA', en: 'AI Agent' }, emoji: '🛰️', sym: 'agent', t: 900, y: 3200, cost: 1200, color: '#facc15', rarity: 'mythic', lv: 20, desc: { 'pt-BR': 'Automação autônoma de alto risco.', en: 'Autonomous automation at high risk.' } },
+  variable: { name: { 'pt-BR': 'Variável', en: 'Variable' }, emoji: '📦', sym: 'var x', t: 14, y: 9, cost: 3, color: '#4ade80', rarity: 'common', lv: 1, desc: { 'pt-BR': 'let x = valor. O início de tudo.', en: 'let x = value. The start of it all.' } },
+  function: { name: { 'pt-BR': 'Função', en: 'Function' }, emoji: '⚡', sym: 'fn()', t: 30, y: 27, cost: 8, color: '#60a5fa', rarity: 'common', lv: 1, desc: { 'pt-BR': 'DRY principle. Lógica reutilizável.', en: 'DRY principle. Reusable logic.' } },
+  class: { name: { 'pt-BR': 'Classe', en: 'Class' }, emoji: '🏛️', sym: 'class{}', t: 62, y: 82, cost: 20, color: '#c084fc', rarity: 'uncommon', lv: 3, desc: { 'pt-BR': 'OOP em sua forma clássica.', en: 'OOP in its classic form.' } },
+  api: { name: { 'pt-BR': 'API REST', en: 'REST API' }, emoji: '🌐', sym: 'GET/', t: 120, y: 210, cost: 46, color: '#fb923c', rarity: 'rare', lv: 5, desc: { 'pt-BR': 'Conecta serviços. Status: 200 OK.', en: 'Connects services. Status: 200 OK.' } },
+  algorithm: { name: { 'pt-BR': 'Algoritmo', en: 'Algorithm' }, emoji: '🧮', sym: 'O(n)', t: 185, y: 430, cost: 88, color: '#f43f5e', rarity: 'rare', lv: 7, desc: { 'pt-BR': 'Big-O importa. Eficiência é tudo.', en: 'Big-O matters. Efficiency is everything.' } },
+  database: { name: { 'pt-BR': 'Banco', en: 'Database' }, emoji: '🗄️', sym: 'SQL', t: 290, y: 900, cost: 165, color: '#22d3ee', rarity: 'epic', lv: 10, desc: { 'pt-BR': 'Persistência real. SELECT * FROM life.', en: 'Real persistence. SELECT * FROM life.' } },
+  ml_model: { name: { 'pt-BR': 'Modelo ML', en: 'ML Model' }, emoji: '🤖', sym: 'AI()', t: 520, y: 2400, cost: 380, color: '#a78bfa', rarity: 'legendary', lv: 15, desc: { 'pt-BR': 'model.fit(X,y). Reze ao GPU.', en: 'model.fit(X,y). Pray to the GPU.' } },
+  cache: { name: { 'pt-BR': 'Cache', en: 'Cache' }, emoji: '🧠', sym: 'L1', t: 95, y: 180, cost: 34, color: '#34d399', rarity: 'rare', lv: 4, desc: { 'pt-BR': 'Latência baixa, throughput alto.', en: 'Low latency, high throughput.' } },
+  microservice: { name: { 'pt-BR': 'Microserviço', en: 'Microservice' }, emoji: '🧩', sym: 'svc', t: 145, y: 300, cost: 58, color: '#38bdf8', rarity: 'rare', lv: 6, desc: { 'pt-BR': 'Escala horizontal e complexidade vertical.', en: 'Horizontal scale, vertical complexity.' } },
+  shader: { name: { 'pt-BR': 'Shader', en: 'Shader' }, emoji: '✨', sym: 'GLSL', t: 230, y: 560, cost: 96, color: '#f472b6', rarity: 'epic', lv: 8, desc: { 'pt-BR': 'Brilho, partículas e custo de GPU.', en: 'Glow, particles, and GPU cost.' } },
+  docker: { name: { 'pt-BR': 'Docker', en: 'Docker' }, emoji: '🐳', sym: 'img', t: 270, y: 700, cost: 118, color: '#0ea5e9', rarity: 'epic', lv: 9, desc: { 'pt-BR': 'Empacota tudo e chama de portátil.', en: 'Packages everything and calls it portable.' } },
+  ai_agent: { name: { 'pt-BR': 'Agente IA', en: 'AI Agent' }, emoji: '🛰️', sym: 'agent', t: 680, y: 3600, cost: 920, color: '#facc15', rarity: 'mythic', lv: 20, desc: { 'pt-BR': 'Automação autônoma de alto risco.', en: 'Autonomous automation at high risk.' } },
 };
 
 export const UPGRADES = {

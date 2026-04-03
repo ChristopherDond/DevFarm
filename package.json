@@ -1,11 +1,12 @@
 {
   "name": "devfarm",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "type": "module",
   "scripts": {
     "dev": "node scripts/preview.mjs",
     "build": "node scripts/build.mjs",
-    "preview": "node scripts/preview.mjs"
+    "preview": "node scripts/preview.mjs",
+    "qa:saves": "node scripts/qa-saves.mjs"
   }
 }

@@ -1,0 +1,16 @@
+{
+  "version": "0.7.0",
+  "tokens": "NaN",
+  "level": -8,
+  "xp": -10,
+  "farmSize": 999,
+  "farmCols": 99,
+  "selectedCrop": "invalid_crop",
+  "settings": {
+    "language": 123
+  },
+  "plots": [
+    { "state": "oops" },
+    { "state": "growing", "crop": "missing", "progress": "bad" }
+  ]
+}

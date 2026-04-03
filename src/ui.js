@@ -1,5 +1,5 @@
 import { ACHIEVEMENTS, CROPS, UPGRADES, cropDesc, cropLabel } from './data.js';
-import { getPrestigeMultiplier, getSpeedMultiplier, getUnlockableCount, hasUnlockedAllCrops } from './game.js';
+import { getPrestigeMultiplier, getSpeedMultiplier, getTutorialProgress, getUnlockableCount, hasUnlockedAllCrops } from './game.js';
 import { t } from './i18n.js';
 
 function fmt(value) {
@@ -265,6 +265,36 @@ function renderStats(state) {
     <div style="margin-top:10px" class="muted">Prestige multiplier: x${getPrestigeMultiplier(state).toFixed(2)}</div>
     <div class="muted">Unlocked crops: ${getUnlockableCount(state)}/${Object.keys(CROPS).length}</div>
     <div class="muted">All crops unlocked: ${hasUnlockedAllCrops(state) ? 'yes' : 'no'}</div>
+  `;
+}
+
+function renderLiveIndicators(state) {
+  const tags = [];
+  if (state.paused) tags.push('<span class="tag warn">PAUSED</span>');
+  if (state.activeEvent) tags.push('<span class="tag bad">EVENT</span>');
+  if (state.reviewBonus) tags.push('<span class="tag good">REVIEW x2</span>');
+  if (state.hackathonBonus) tags.push('<span class="tag good">HACKATHON</span>');
+  if (Date.now() < state.refactorUntil) tags.push('<span class="tag">REFACTOR BOOST</span>');
+  if (Date.now() < state.bugShieldUntil) tags.push('<span class="tag good">BUG SHIELD</span>');
+  if (state.level >= 15) tags.push('<span class="tag">PRESTIGE READY</span>');
+
+  if (!tags.length) return '<span class="muted">No active modifiers</span>';
+  return tags.join(' ');
+}
+
+function renderTutorialProgress(state) {
+  const progress = getTutorialProgress(state);
+  const steps = t(state, 'tutorialSteps') || [];
+  return `
+    <div class="tutorialBox">
+      <div class="actionRow">
+        <div class="actionTitle">${t(state, 'tutorial')}</div>
+        <div class="tag ${progress >= 4 ? 'good' : 'warn'}">${progress}/4</div>
+      </div>
+      <div class="bar"><div style="width:${(progress / 4) * 100}%"></div></div>
+      <div class="muted" style="margin-top:6px">${steps[Math.max(0, Math.min(3, progress))] || ''}</div>
+      ${state.tutorialDismissed ? '<div class="muted">Tutorial completo.</div>' : `<button type="button" class="menuBtn" data-action="dismissTutorial" style="margin-top:8px">${t(state, 'confirm')}</button>`}
+    </div>
   `;
 }
 
@@ -551,10 +581,11 @@ export function createUI(root, api) {
     root.querySelector('#farmGrid').innerHTML = renderFarm(state);
     root.querySelector('#seedGrid').innerHTML = renderSeedGrid(state);
     root.querySelector('#seedInfo').innerHTML = renderSeedInfo(state);
+    root.querySelector('#seedInfo').insertAdjacentHTML('beforeend', renderTutorialProgress(state));
     root.querySelector('#tabbar').innerHTML = renderTabs(state);
     root.querySelector('#tabContent').innerHTML = renderTabContent(state, context);
     root.querySelector('#statusText').textContent = state.paused ? t(state, 'paused') : state.status;
-    root.querySelector('#statusRight').textContent = state.tutorialDismissed ? `${t(state, 'saved')} • ${fmt(getUnlockableCount(state))} crops` : t(state, 'tutorial');
+    root.querySelector('#statusRight').innerHTML = renderLiveIndicators(state);
 
     if (state.menuOpen) showMenuLayer(state, context);
     else hideMenuLayer();
@@ -562,8 +593,9 @@ export function createUI(root, api) {
     if (state.activeEvent) showEventLayer(state);
     else hideEventLayer();
 
-    const liveNote = root.querySelector('#statusRight');
-    liveNote.textContent = state.paused ? t(state, 'paused') : `${t(state, 'offline')} • ${fmt(getUnlockableCount(state))}/${Object.keys(CROPS).length}`;
+    if (!state.paused) {
+      root.querySelector('#statusText').textContent = `${state.status} • ${t(state, 'offline')} ${fmt(getUnlockableCount(state))}/${Object.keys(CROPS).length}`;
+    }
   }
 
   function renderTabContent(state, context) {

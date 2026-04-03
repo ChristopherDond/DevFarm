@@ -1,0 +1,42 @@
+{
+  "version": "1.0.0",
+  "tokens": 335,
+  "level": 8,
+  "xp": 95,
+  "xpToNext": 350,
+  "farmSize": 25,
+  "farmCols": 5,
+  "selectedCrop": "algorithm",
+  "activeTab": "contracts",
+  "upgrades": {
+    "coffee": 2,
+    "linter": 1,
+    "gpu": 1,
+    "network": 0,
+    "ci_cd": 0,
+    "so": 1,
+    "ex6": 0,
+    "ex7": 0
+  },
+  "inv": {
+    "variable": 4,
+    "function": 3,
+    "class": 3,
+    "api": 2,
+    "algorithm": 1
+  },
+  "stats": {
+    "harvested": 60,
+    "earned": 2150,
+    "bugsFixed": 3,
+    "mlHarv": 0,
+    "varHarv": 20,
+    "planted": 85,
+    "contractsClaimed": 2
+  },
+  "plots": [
+    { "state": "empty" },
+    { "state": "growing", "crop": "variable", "plantedAt": 1743500000000, "progress": 0.4 },
+    { "state": "ready", "crop": "function", "plantedAt": 1743500010000, "progress": 1 }
+  ]
+}
