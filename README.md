@@ -1,6 +1,6 @@
 # DevFarm 🌾
 
-DevFarm is a browser-first idle farming game designed for developers. Plant code-themed crops, harvest tokens, and climb levels inside a slick, terminal-inspired UI that feels like a dev dashboard.
+DevFarm is a browser-first idle farming game designed for developers. It now ships as a modular ES module project with a lightweight build step, a real menu/options flow, save slots, import/export, audio, and a versioned save format.
 
 ## Why it is fun
 
@@ -18,15 +18,19 @@ git clone https://github.com/ChristopherDond/DevFarm.git
 cd DevFarm
 ```
 
-2. Run locally (two options):
+2. Run locally:
 ```bash
-# Option A: just open index.html in your browser
+npm run dev
 ```
 
+3. Build for release:
 ```bash
-# Option B: serve locally
-python -m http.server 8000
-# then visit http://localhost:8000
+npm run build
+```
+
+4. Preview the built output:
+```bash
+npm run preview
 ```
 
 ## How to play
@@ -41,17 +45,19 @@ python -m http.server 8000
 
 ```
 DevFarm/
-├── index.html          # Single-file game (HTML, CSS, JS)
-├── README.md           # Project overview
-└── .git/               # Git repository
+├── index.html          # Minimal shell
+├── src/                # Game, UI, storage, audio, data, styles
+├── scripts/            # Build and preview helpers
+├── dist/               # Build output
+└── README.md           # Project overview
 ```
 
 ## Tech stack
 
 - **HTML5** for structure
 - **CSS3** for layout, theming, and animation
-- **JavaScript** for game logic (embedded)
-- **Fonts**: JetBrains Mono and Orbitron
+- **JavaScript ES modules** for logic, UI, storage, and audio
+- **Node.js** for the custom build/preview scripts
 
 ## Gameplay highlights
 
@@ -59,6 +65,13 @@ DevFarm/
 - **Resource strategy**: Balance planting costs with long-term gains.
 - **Events & contracts**: Short-term challenges and rewarding bursts.
 - **Achievements**: Earn badges for milestones and mastery.
+- **Release flow**: Menu, options, save slots, export/import, and a versioned save format.
+
+## Build notes
+
+- The project no longer depends on a giant monolithic HTML file.
+- `npm run build` copies the modular source into `dist/` for release packaging.
+- Audio uses generated Web Audio effects, so there are no fragile external sound dependencies.
 
 ## Browser support
 
