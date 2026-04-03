@@ -17,13 +17,14 @@ body {
     var(--bg0);
   color:var(--t1);
   font-family:var(--font-mono);
-  overflow:hidden;
+  overflow:auto;
 }
 button, input, select, textarea { font:inherit; }
 button { color:inherit; }
 
 .app {
-  height:100%;
+  min-height:100vh;
+  height:100vh;
   display:grid;
   grid-template-rows:auto 1fr auto;
 }
@@ -53,17 +54,17 @@ button { color:inherit; }
 .xplabel { display:flex; justify-content:space-between; font-size:10px; color:var(--t3); margin-top:4px; }
 
 .main {
-  display:grid; grid-template-columns:minmax(0,1fr) 320px; min-height:0;
+  display:grid; grid-template-columns:minmax(0,1fr) 320px; min-height:0; height:100%;
 }
 .farmPane {
-  padding:14px; min-height:0; overflow:auto;
+  padding:14px; min-height:0; height:100%; overflow-y:auto; overflow-x:hidden;
   background:linear-gradient(180deg, rgba(7,9,15,.75), rgba(7,9,15,.95));
 }
 .farmPane::-webkit-scrollbar, .sidePane::-webkit-scrollbar { width:6px; }
 .farmPane::-webkit-scrollbar-thumb, .sidePane::-webkit-scrollbar-thumb { background:var(--b1); border-radius:999px; }
 .sectionTitle { font-size:11px; text-transform:uppercase; letter-spacing:2px; color:var(--t3); margin:0 0 10px; }
 .farmGrid {
-  display:grid; gap:7px; width:min(100%, 640px);
+  display:grid; gap:7px; width:100%; max-width:760px; grid-template-columns:repeat(5, minmax(0, 1fr));
 }
 .plot {
   aspect-ratio:1; border-radius:10px; border:1px solid var(--b1); background:var(--bg1); cursor:pointer;
@@ -88,7 +89,7 @@ button { color:inherit; }
 .plotBug { color:var(--red); font-size:8px; font-weight:700; letter-spacing:1px; }
 
 .sidePane {
-  border-left:1px solid var(--b1); background:rgba(13,17,23,.96); min-height:0; overflow:auto;
+  border-left:1px solid var(--b1); background:rgba(13,17,23,.96); min-height:0; height:100%; overflow-y:auto; overflow-x:hidden;
 }
 .panel { padding:12px; border-bottom:1px solid var(--b1); }
 .seedGrid { display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; }
@@ -146,7 +147,7 @@ button { color:inherit; }
   padding:18px; backdrop-filter:blur(6px);
 }
 .card {
-  width:min(100%, 760px); max-height:min(92vh, 900px); overflow:auto; background:var(--bg1); border:1px solid var(--b1); border-radius:18px; box-shadow:var(--shadow);
+  width:min(100%, 760px); max-height:min(92vh, 900px); overflow-y:auto; overflow-x:hidden; background:var(--bg1); border:1px solid var(--b1); border-radius:18px; box-shadow:var(--shadow);
 }
 .cardHead { padding:16px 18px; border-bottom:1px solid var(--b1); display:flex; justify-content:space-between; gap:10px; align-items:center; }
 .cardBody { padding:16px 18px; }
@@ -187,6 +188,8 @@ button { color:inherit; }
 
 @media (max-width: 1024px) {
   body { overflow:auto; }
+  .app { height:auto; min-height:100vh; }
+  .main { height:auto; }
   .main { grid-template-columns:1fr; }
   .sidePane { border-left:0; border-top:1px solid var(--b1); }
 }

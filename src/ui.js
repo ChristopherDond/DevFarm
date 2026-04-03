@@ -577,6 +577,7 @@ export function createUI(root, api) {
     root.querySelector('#hudXpCur').textContent = fmt(state.xp);
     root.querySelector('#hudXpMax').textContent = fmt(state.xpToNext);
     root.querySelector('#farmTitle').textContent = `${t(state, 'title')} // ${state.farmCols}×${state.farmCols}`;
+    root.querySelector('#farmGrid').style.gridTemplateColumns = `repeat(${state.farmCols}, minmax(0, 1fr))`;
     root.querySelector('#seedTitle').textContent = `${t(state, 'shop')} // ${state.selectedCrop}`;
     root.querySelector('#farmGrid').innerHTML = renderFarm(state);
     root.querySelector('#seedGrid').innerHTML = renderSeedGrid(state);
