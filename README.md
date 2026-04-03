@@ -1,5 +1,7 @@
 # DevFarm 🌾
 
+[Versão Português](README.pt-BR.md)
+
 DevFarm is a browser-first idle farming game for developers. You plant code-themed crops, harvest tokens, buy upgrades, complete contracts, and progress toward prestige.
 
 ## Current release focus (v2.1)
@@ -53,7 +55,8 @@ DevFarm/
 │   ├── preview.mjs
 │   └── qa-saves.mjs
 ├── qa/saves/
-└── README.md
+├── README.md
+└── README.pt-BR.md
 ```
 
 ## How to play
