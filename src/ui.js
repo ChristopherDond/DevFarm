@@ -103,12 +103,12 @@ function renderSeedInfo(state) {
     <div class="seedDesc">${cropDesc(crop, lang)}</div>
     ${unlocked ? `
       <div class="seedStats">
-        <div>Yield: <span>${fmt(crop.y)}</span></div>
-        <div>Time: <span>${fmtTime(Math.max(5, Math.round(crop.t / speed)))}</span></div>
-        <div>Owned: <span>${fmt(state.inv[state.selectedCrop] || 0)}</span></div>
-        <div>Cost: <span>${fmt(crop.cost)}</span></div>
+        <div>${t(state, 'yield')}: <span>${fmt(crop.y)}</span></div>
+        <div>${t(state, 'time')}: <span>${fmtTime(Math.max(5, Math.round(crop.t / speed)))}</span></div>
+        <div>${t(state, 'owned')}: <span>${fmt(state.inv[state.selectedCrop] || 0)}</span></div>
+        <div>${t(state, 'cost')}: <span>${fmt(crop.cost)}</span></div>
       </div>
-    ` : `<div class="muted">Lv.${crop.lv} required.</div>`}
+    ` : `<div class="muted">${t(state, 'requiredLevel').replace('{level}', crop.lv)}</div>`}
   `;
 }
 
@@ -129,7 +129,7 @@ function renderFarm(state) {
       return `
         <button type="button" class="${cls}" data-action="plotClick" data-index="${index}" aria-label="Plot ${index + 1}">
           <div class="plotEmoji">🐛</div>
-          <div class="plotBug">DEBUG</div>
+                <div class="plotBug">${t(state, 'debugAction')}</div>
         </button>
       `;
     }
@@ -137,7 +137,7 @@ function renderFarm(state) {
       return `
         <button type="button" class="${cls}" data-action="plotClick" data-index="${index}" aria-label="Plot ${index + 1}">
           <div class="plotEmoji">${crop.emoji}</div>
-          <div class="plotReady">HARVEST</div>
+                <div class="plotReady">${t(state, 'harvestAction')}</div>
           <div class="plotBar"><div style="width:100%; background:${crop.color}"></div></div>
         </button>
       `;
@@ -174,11 +174,11 @@ function renderShop(state) {
         <div class="actionRow">
           <div>
             <div class="actionTitle" style="color:${crop.color}">${crop.emoji} ${cropLabel(crop, lang)}</div>
-            <div class="actionDesc">${unlocked ? cropDesc(crop, lang) : `Lv.${crop.lv} required`}</div>
+            <div class="actionDesc">${unlocked ? cropDesc(crop, lang) : t(state, 'requiredLevel').replace('{level}', crop.lv)}</div>
           </div>
           <div class="tag ${affordable ? 'good' : 'warn'}">${fmt(crop.cost)} 💰</div>
         </div>
-        <div class="muted">Owned: ${fmt(state.inv[id] || 0)}</div>
+        <div class="muted">${t(state, 'owned')}: ${fmt(state.inv[id] || 0)}</div>
       </button>
     `;
   }).join('');
@@ -202,7 +202,7 @@ function renderUpgrades(state) {
           </div>
           <div class="tag ${maxed ? 'good' : affordable ? 'warn' : 'bad'}">${maxed ? 'MAX' : `${fmt(cost)} 💰`}</div>
         </div>
-        <div class="muted">${upgrade.req.length ? `Req: ${upgrade.req.map(req => UPGRADES[req].name[lang] || UPGRADES[req].name.en).join(', ')}` : 'No prereqs'}</div>
+        <div class="muted">${upgrade.req.length ? `${t(state, 'prereq')}: ${upgrade.req.map(req => UPGRADES[req].name[lang] || UPGRADES[req].name.en).join(', ')}` : t(state, 'noPrereqs')}</div>
         <div class="muted">${dots}</div>
       </button>
     `;
@@ -221,7 +221,7 @@ function renderContracts(state) {
             <div class="actionTitle">${contract.emoji} ${contract.name[lang] || contract.name.en}</div>
             <div class="actionDesc">${contract.desc[lang] || contract.desc.en}</div>
           </div>
-          <div class="tag ${contract.claimed ? '' : done ? 'good' : 'warn'}">${contract.claimed ? 'CLAIMED' : done ? 'CLAIM' : `${contract.progress}/${contract.goal}`}</div>
+          <div class="tag ${contract.claimed ? '' : done ? 'good' : 'warn'}">${contract.claimed ? t(state, 'claimed') : done ? t(state, 'claim') : `${contract.progress}/${contract.goal}`}</div>
         </div>
         <div class="bar"><div style="width:${pct.toFixed(1)}%"></div></div>
       </button>
@@ -242,7 +242,7 @@ function renderGoals(state) {
             <div class="actionTitle">${goal.name[lang] || goal.name.en}</div>
             <div class="actionDesc">${goal.desc[lang] || goal.desc.en}</div>
           </div>
-          <div class="tag ${goal.claimed ? '' : done ? 'good' : 'warn'}">${goal.claimed ? 'CLAIMED' : done ? 'CLAIM' : `${goal.progress}/${goal.goal}`}</div>
+          <div class="tag ${goal.claimed ? '' : done ? 'good' : 'warn'}">${goal.claimed ? t(state, 'claimed') : done ? t(state, 'claim') : `${goal.progress}/${goal.goal}`}</div>
         </div>
         <div class="bar"><div style="width:${pct.toFixed(1)}%"></div></div>
         <div class="muted">${rewardText}</div>
@@ -255,30 +255,30 @@ function renderStats(state) {
   const goalsDone = state.goals.filter(goal => goal.claimed).length;
   return `
     <div class="statGrid">
-      <div class="statCard"><div class="statLabel">Harvested</div><div class="statValue" style="color:var(--green)">${fmt(state.stats.harvested)}</div></div>
-      <div class="statCard"><div class="statLabel">Tokens earned</div><div class="statValue" style="color:var(--yellow)">${fmt(state.stats.earned)}</div></div>
-      <div class="statCard"><div class="statLabel">Bugs fixed</div><div class="statValue" style="color:var(--red)">${fmt(state.stats.bugsFixed)}</div></div>
-      <div class="statCard"><div class="statLabel">Reputation</div><div class="statValue" style="color:var(--purple)">${fmt(state.reputation)}</div></div>
-      <div class="statCard"><div class="statLabel">Prestige</div><div class="statValue" style="color:var(--cyan)">${fmt(state.prestige)}</div></div>
-      <div class="statCard"><div class="statLabel">Goals claimed</div><div class="statValue" style="color:var(--blue)">${fmt(goalsDone)}</div></div>
+      <div class="statCard"><div class="statLabel">${t(state, 'harvested')}</div><div class="statValue" style="color:var(--green)">${fmt(state.stats.harvested)}</div></div>
+      <div class="statCard"><div class="statLabel">${t(state, 'tokensEarned')}</div><div class="statValue" style="color:var(--yellow)">${fmt(state.stats.earned)}</div></div>
+      <div class="statCard"><div class="statLabel">${t(state, 'bugsFixed')}</div><div class="statValue" style="color:var(--red)">${fmt(state.stats.bugsFixed)}</div></div>
+      <div class="statCard"><div class="statLabel">${t(state, 'reputation')}</div><div class="statValue" style="color:var(--purple)">${fmt(state.reputation)}</div></div>
+      <div class="statCard"><div class="statLabel">${t(state, 'prestige')}</div><div class="statValue" style="color:var(--cyan)">${fmt(state.prestige)}</div></div>
+      <div class="statCard"><div class="statLabel">${t(state, 'goalsClaimed')}</div><div class="statValue" style="color:var(--blue)">${fmt(goalsDone)}</div></div>
     </div>
-    <div style="margin-top:10px" class="muted">Prestige multiplier: x${getPrestigeMultiplier(state).toFixed(2)}</div>
-    <div class="muted">Unlocked crops: ${getUnlockableCount(state)}/${Object.keys(CROPS).length}</div>
-    <div class="muted">All crops unlocked: ${hasUnlockedAllCrops(state) ? 'yes' : 'no'}</div>
+    <div style="margin-top:10px" class="muted">${t(state, 'prestigeMultiplier')}: x${getPrestigeMultiplier(state).toFixed(2)}</div>
+    <div class="muted">${t(state, 'unlockedCrops')}: ${getUnlockableCount(state)}/${Object.keys(CROPS).length}</div>
+    <div class="muted">${t(state, 'allCropsUnlocked')}: ${hasUnlockedAllCrops(state) ? t(state, 'yes') : t(state, 'no')}</div>
   `;
 }
 
 function renderLiveIndicators(state) {
   const tags = [];
-  if (state.paused) tags.push('<span class="tag warn">PAUSED</span>');
-  if (state.activeEvent) tags.push('<span class="tag bad">EVENT</span>');
-  if (state.reviewBonus) tags.push('<span class="tag good">REVIEW x2</span>');
-  if (state.hackathonBonus) tags.push('<span class="tag good">HACKATHON</span>');
-  if (Date.now() < state.refactorUntil) tags.push('<span class="tag">REFACTOR BOOST</span>');
-  if (Date.now() < state.bugShieldUntil) tags.push('<span class="tag good">BUG SHIELD</span>');
-  if (state.level >= 15) tags.push('<span class="tag">PRESTIGE READY</span>');
+  if (state.paused) tags.push(`<span class="tag warn">${t(state, 'pausedTag')}</span>`);
+  if (state.activeEvent) tags.push(`<span class="tag bad">${t(state, 'eventTag')}</span>`);
+  if (state.reviewBonus) tags.push(`<span class="tag good">${t(state, 'reviewTag')}</span>`);
+  if (state.hackathonBonus) tags.push(`<span class="tag good">${t(state, 'hackathonTag')}</span>`);
+  if (Date.now() < state.refactorUntil) tags.push(`<span class="tag">${t(state, 'refactorTag')}</span>`);
+  if (Date.now() < state.bugShieldUntil) tags.push(`<span class="tag good">${t(state, 'bugShieldTag')}</span>`);
+  if (state.level >= 15) tags.push(`<span class="tag">${t(state, 'prestigeReadyTag')}</span>`);
 
-  if (!tags.length) return '<span class="muted">No active modifiers</span>';
+  if (!tags.length) return `<span class="muted">${t(state, 'noActiveModifiers')}</span>`;
   return tags.join(' ');
 }
 
@@ -293,7 +293,7 @@ function renderTutorialProgress(state) {
       </div>
       <div class="bar"><div style="width:${(progress / 4) * 100}%"></div></div>
       <div class="muted" style="margin-top:6px">${steps[Math.max(0, Math.min(3, progress))] || ''}</div>
-      ${state.tutorialDismissed ? '<div class="muted">Tutorial completo.</div>' : `<button type="button" class="menuBtn" data-action="dismissTutorial" style="margin-top:8px">${t(state, 'confirm')}</button>`}
+      ${state.tutorialDismissed ? `<div class="muted">${t(state, 'tutorialDone')}</div>` : `<button type="button" class="menuBtn" data-action="dismissTutorial" style="margin-top:8px">${t(state, 'confirm')}</button>`}
     </div>
   `;
 }
@@ -309,7 +309,7 @@ function renderAchievements(state) {
             <div class="actionTitle">${achievement.emoji} ${achievement.name[lang] || achievement.name.en}</div>
             <div class="actionDesc">${achievement.desc[lang] || achievement.desc.en}</div>
           </div>
-          <div class="tag ${done ? 'good' : ''}">${done ? '✓' : 'LOCKED'}</div>
+          <div class="tag ${done ? 'good' : ''}">${done ? '✓' : t(state, 'locked')}</div>
         </div>
       </div>
     `;
@@ -333,7 +333,7 @@ function renderSaves(state, context) {
     <div class="saveGrid">
       ${slots.map((slot, index) => {
         const label = slot ? `${t(state, 'saveSlot')} ${slot.slot}` : `${t(state, 'saveSlot')} ${index + 1}`;
-        const summary = slot ? `Lv.${slot.state.level} • ${fmt(slot.state.tokens)} tok • PST ${fmt(slot.state.prestige)} • ${fmtDate(slot.savedAt)}` : t(state, 'noSave');
+        const summary = slot ? `${t(state, 'levelShort')}${slot.state.level} • ${fmt(slot.state.tokens)} ${t(state, 'tokensShort')} • PST ${fmt(slot.state.prestige)} • ${fmtDate(slot.savedAt)}` : t(state, 'noSave');
         return `
           <div class="saveSlot">
             <h4>${label}</h4>
@@ -411,10 +411,10 @@ function renderMenu(state, context) {
         <div class="overlayNote">${t(state, 'tutorial')} • ${t(state, 'accessibilityHint')}</div>
       </div>
       <div class="heroBox">
-        <div class="muted">Session</div>
-        <div style="font-size:28px;font-weight:800;margin:8px 0">Lv.${fmt(state.level)}</div>
-        <div class="muted">Tokens: ${fmt(state.tokens)} • Prestige: ${fmt(state.prestige)}</div>
-        <div class="muted">Unlocks: ${getUnlockableCount(state)}/${Object.keys(CROPS).length}</div>
+        <div class="muted">${t(state, 'session')}</div>
+        <div style="font-size:28px;font-weight:800;margin:8px 0">${t(state, 'levelShort')}${fmt(state.level)}</div>
+        <div class="muted">${t(state, 'tokensEarned')}: ${fmt(state.tokens)} • ${t(state, 'prestige')}: ${fmt(state.prestige)}</div>
+        <div class="muted">${t(state, 'unlocks')}: ${getUnlockableCount(state)}/${Object.keys(CROPS).length}</div>
       </div>
     </div>
   `;
@@ -430,9 +430,9 @@ function renderMenu(state, context) {
         </div>
       </div>
       <div class="heroBox">
-        <div class="muted">Current prestige: ${fmt(state.prestige)}</div>
-        <div class="muted">Prestige multiplier: x${getPrestigeMultiplier(state).toFixed(2)}</div>
-        <div class="muted">Requirement: Lv.15+</div>
+        <div class="muted">${t(state, 'currentPrestige')}: ${fmt(state.prestige)}</div>
+        <div class="muted">${t(state, 'prestigeMultiplier')}: x${getPrestigeMultiplier(state).toFixed(2)}</div>
+        <div class="muted">${t(state, 'requirement')}: ${t(state, 'levelShort')}15+</div>
       </div>
     </div>
   `;
@@ -444,7 +444,7 @@ function renderMenu(state, context) {
       <div class="saveGrid">
         ${saves.map((slot, index) => {
           const label = slot ? `${t(state, 'saveSlot')} ${slot.slot}` : `${t(state, 'saveSlot')} ${index + 1}`;
-          const summary = slot ? `Lv.${slot.state.level} • ${fmt(slot.state.tokens)} tok • PST ${fmt(slot.state.prestige)} • ${fmtDate(slot.savedAt)}` : t(state, 'noSave');
+          const summary = slot ? `${t(state, 'levelShort')}${slot.state.level} • ${fmt(slot.state.tokens)} ${t(state, 'tokensShort')} • PST ${fmt(slot.state.prestige)} • ${fmtDate(slot.savedAt)}` : t(state, 'noSave');
           return `
             <div class="saveSlot">
               <h4>${label}</h4>
@@ -578,7 +578,7 @@ export function createUI(root, api) {
     root.querySelector('#hudXpMax').textContent = fmt(state.xpToNext);
     root.querySelector('#farmTitle').textContent = `${t(state, 'title')} // ${state.farmCols}×${state.farmCols}`;
     root.querySelector('#farmGrid').style.gridTemplateColumns = `repeat(${state.farmCols}, minmax(0, 1fr))`;
-    root.querySelector('#seedTitle').textContent = `${t(state, 'shop')} // ${state.selectedCrop}`;
+    root.querySelector('#seedTitle').textContent = `${t(state, 'shop')} // ${cropLabel(CROPS[state.selectedCrop], state.settings.language)}`;
     root.querySelector('#farmGrid').innerHTML = renderFarm(state);
     root.querySelector('#seedGrid').innerHTML = renderSeedGrid(state);
     root.querySelector('#seedInfo').innerHTML = renderSeedInfo(state);

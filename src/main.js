@@ -2,7 +2,7 @@ import { createAudioEngine } from './audio.js';
 import { createDefaultState, applySaveTimestamp, buySeed, buyUpgrade, claimContract, claimGoal, closeMenu, createStateSummary, dismissTutorial, fixBug, harvest, maybeTriggerEvent, normalizeState, openMenu, plant, prestigeReset, refreshDerivedState, setActiveTab, setLanguage, setSelectedCrop, setVolume, tick, togglePause, chooseEvent } from './game.js';
 import { deleteSlot, exportSave, importSave, listSlots, loadSlot, saveSlot } from './storage.js';
 import { createUI } from './ui.js';
-import { t } from './i18n.js';
+import { t, tf } from './i18n.js';
 
 const root = document.getElementById('app');
 let state = normalizeState(loadInitialState());
@@ -97,7 +97,7 @@ const ui = createUI(root, {
         state.saveSlot = Number(data.slot);
         localStorage.setItem('devfarm.activeSlot', String(state.saveSlot));
         persistState();
-        ui.toast('ok', `Slot ${state.saveSlot} saved`);
+        ui.toast('ok', tf(state, 'slotSaved', { slot: state.saveSlot }));
         requestRender();
         break;
       case 'loadSlot': {
@@ -109,9 +109,9 @@ const ui = createUI(root, {
           localStorage.setItem('devfarm.activeSlot', String(slot));
           updateAudioSettings();
           requestRender();
-          ui.toast('info', `Slot ${slot} loaded`);
+          ui.toast('info', tf(state, 'slotLoaded', { slot }));
         } else {
-          ui.toast('warn', `Slot ${slot} empty`);
+          ui.toast('warn', tf(state, 'slotEmpty', { slot }));
         }
         break;
       }
@@ -119,12 +119,12 @@ const ui = createUI(root, {
         deleteSlot(Number(data.slot));
         savesCache = listSlots(normalizeState);
         requestRender();
-        ui.toast('warn', `Slot ${data.slot} deleted`);
+        ui.toast('warn', tf(state, 'slotDeleted', { slot: data.slot }));
         break;
       case 'exportSave': {
         const textarea = document.getElementById('importText');
         if (textarea) textarea.value = exportSave(state);
-        ui.toast('info', 'Save exported');
+        ui.toast('info', t(state, 'saveExported'));
         break;
       }
       case 'importSave': {
@@ -140,9 +140,9 @@ const ui = createUI(root, {
             updateAudioSettings();
             requestRender();
             persistState();
-            ui.toast('ok', 'Save imported');
+            ui.toast('ok', t(state, 'saveImported'));
           } catch (error) {
-            ui.toast('err', 'Invalid save JSON');
+            ui.toast('err', t(state, 'invalidSaveJson'));
           }
         } else {
           fileInput?.click();
@@ -216,9 +216,9 @@ const ui = createUI(root, {
         updateAudioSettings();
         requestRender();
         persistState();
-        ui.toast('ok', 'Save imported');
+        ui.toast('ok', t(state, 'saveImported'));
       } catch {
-        ui.toast('err', 'Invalid save file');
+        ui.toast('err', t(state, 'invalidSaveFile'));
       }
     };
     reader.readAsText(file);
@@ -234,6 +234,9 @@ const hooks = {
   },
   t(key) {
     return t(state, key);
+  },
+  tf(key, vars) {
+    return tf(state, key, vars);
   },
 };
 

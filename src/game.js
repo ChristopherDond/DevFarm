@@ -256,9 +256,13 @@ function awardXp(state, amount, deps) {
     state.level += 1;
     state.xpToNext = Math.round(50 * Math.pow(1.39, state.level - 1));
     leveled = true;
-    deps.notify?.('ok', `Lv.${state.level}`);
+    deps.notify?.('ok', `${deps.t('levelShort')} ${state.level}`);
     Object.values(CROPS).forEach(crop => {
-      if (crop.lv === state.level) deps.notify?.('info', `${crop.emoji} ${cropLabel(crop, state.settings.language)} ${deps.t('ready') || 'unlocked'}`);
+      if (crop.lv === state.level) {
+        const name = cropLabel(crop, state.settings.language);
+        const message = deps.tf ? deps.tf('cropUnlocked', { emoji: crop.emoji, name }) : `${crop.emoji} ${name}`;
+        deps.notify?.('info', message);
+      }
     });
   }
   if (leveled) deps.play?.('level');
@@ -291,11 +295,12 @@ export function plant(state, index, deps) {
   const crop = CROPS[cropId];
   if (!crop) return;
   if (state.level < crop.lv) {
-    deps.notify?.('err', `${cropLabel(crop, state.settings.language)} Lv.${crop.lv}`);
+    deps.notify?.('err', deps.tf ? deps.tf('needLevel', { level: crop.lv }) : `${cropLabel(crop, state.settings.language)} Lv.${crop.lv}`);
     return;
   }
   if (!state.inv[cropId] || state.inv[cropId] <= 0) {
-    deps.notify?.('warn', `${cropLabel(crop, state.settings.language)} x0`);
+    const name = cropLabel(crop, state.settings.language);
+    deps.notify?.('warn', deps.tf ? deps.tf('noSeeds', { name }) : `${name} x0`);
     return;
   }
   const plot = state.plots[index];
@@ -304,7 +309,7 @@ export function plant(state, index, deps) {
   state.plots[index] = { state: 'growing', crop: cropId, plantedAt: Date.now(), progress: 0 };
   state.stats.planted += 1;
   if (state.tutorialStep < 1) state.tutorialStep = 1;
-  state.status = `${cropLabel(crop, state.settings.language)} planted`;
+  state.status = deps.tf ? deps.tf('plantedStatus', { name: cropLabel(crop, state.settings.language) }) : `${cropLabel(crop, state.settings.language)} planted`;
   deps.play?.('plant');
 }
 
@@ -323,7 +328,7 @@ export function harvest(state, index, deps) {
   state.plots[index] = createPlot();
   state.reviewBonus = false;
   state.hackathonBonus = false;
-  state.status = `+${baseYield} tokens`;
+  state.status = deps.tf ? deps.tf('tokenGainStatus', { amount: baseYield }) : `+${baseYield} tokens`;
   deps.play?.('harvest');
   checkAchievements(state, deps);
   refreshDerivedState(state);
@@ -333,7 +338,7 @@ export function fixBug(state, index, deps) {
   state.plots[index] = createPlot();
   state.stats.bugsFixed += 1;
   addTokens(state, 8);
-  state.status = 'bug fixed';
+  state.status = deps.t('bugFixedStatus');
   deps.play?.('bug');
   checkAchievements(state, deps);
 }
@@ -342,17 +347,17 @@ export function buySeed(state, cropId, deps) {
   const crop = CROPS[cropId];
   if (!crop) return;
   if (state.level < crop.lv) {
-    deps.notify?.('err', `${cropLabel(crop, state.settings.language)} Lv.${crop.lv}`);
+    deps.notify?.('err', deps.tf ? deps.tf('needLevel', { level: crop.lv }) : `${cropLabel(crop, state.settings.language)} Lv.${crop.lv}`);
     return;
   }
   if (state.tokens < crop.cost) {
-    deps.notify?.('err', 'Not enough tokens');
+    deps.notify?.('err', deps.t('notEnoughTokens'));
     return;
   }
   state.tokens -= crop.cost;
   state.inv[cropId] = (state.inv[cropId] || 0) + 1;
   if (state.tutorialStep < 3) state.tutorialStep = 3;
-  state.status = `Bought ${cropLabel(crop, state.settings.language)}`;
+  state.status = deps.tf ? deps.tf('boughtStatus', { name: cropLabel(crop, state.settings.language) }) : `Bought ${cropLabel(crop, state.settings.language)}`;
   deps.play?.('buy');
 }
 
@@ -366,23 +371,23 @@ export function buyUpgrade(state, upgradeId, deps) {
   const upgrade = UPGRADES[upgradeId];
   if (!upgrade) return;
   if (!canBuyUpgrade(state, upgradeId)) {
-    deps.notify?.('warn', 'Upgrade tree locked');
+    deps.notify?.('warn', deps.t('upgradeTreeLocked'));
     return;
   }
   const current = state.upgrades[upgradeId] || 0;
   if (current >= upgrade.max) {
-    deps.notify?.('warn', 'Max level reached');
+    deps.notify?.('warn', deps.t('maxLevelReached'));
     return;
   }
   const cost = upgrade.costs[current];
   if (state.tokens < cost) {
-    deps.notify?.('err', `Need ${cost} tokens`);
+    deps.notify?.('err', deps.tf ? deps.tf('needTokens', { amount: cost }) : `Need ${cost} tokens`);
     return;
   }
   state.tokens -= cost;
   state.upgrades[upgradeId] = current + 1;
   if (state.tutorialStep < 4) state.tutorialStep = 4;
-  state.status = `${upgradeLabel(upgrade, state.settings.language)} upgraded`;
+  state.status = deps.tf ? deps.tf('upgradedStatus', { name: upgradeLabel(upgrade, state.settings.language) }) : `${upgradeLabel(upgrade, state.settings.language)} upgraded`;
   deps.play?.('buy');
 
   if (upgrade.effect === 'expand6' && state.farmCols < 6) {
@@ -419,7 +424,7 @@ export function claimContract(state, index, deps) {
   state.reputation += rep;
   state.stats.contractsClaimed += 1;
   awardXp(state, xp, deps);
-  state.status = `Contract completed`;
+  state.status = deps.t('contractCompleted');
   deps.notify?.('ach', `📋 ${contract.name[state.settings.language] || contract.name.en}`);
   deps.play?.('buy');
   if (!state.dailyBonusClaimed && state.contracts.every(item => item.claimed)) {
@@ -427,7 +432,7 @@ export function claimContract(state, index, deps) {
     addTokens(state, 150);
     state.reputation += 1;
     awardXp(state, 100, deps);
-    deps.notify?.('ok', 'Daily set complete');
+    deps.notify?.('ok', deps.t('dailySetComplete'));
   }
   refreshDerivedState(state);
 }
@@ -443,7 +448,7 @@ export function claimGoal(state, index, deps) {
   if (goal.reward.prestige) state.prestige += goal.reward.prestige;
   if (goal.reward.reputation) state.reputation += goal.reward.reputation;
   if (goal.reward.xp) awardXp(state, goal.reward.xp, deps);
-  state.status = `Goal claimed`;
+  state.status = deps.t('goalClaimed');
   deps.notify?.('ach', `🏁 ${goal.name[state.settings.language] || goal.name.en}`);
   deps.play?.('level');
   refreshDerivedState(state);
@@ -478,7 +483,7 @@ export function chooseEvent(state, choiceId, deps) {
 
 export function prestigeReset(state, deps) {
   if (state.level < 15) {
-    deps.notify?.('warn', 'Need level 15');
+    deps.notify?.('warn', deps.tf ? deps.tf('needLevel', { level: 15 }) : 'Need level 15');
     return false;
   }
   const gained = Math.max(1, Math.floor(state.level / 10) + Math.floor(state.reputation / 5));
@@ -507,10 +512,10 @@ export function prestigeReset(state, deps) {
   state.menuOpen = true;
   state.menuSection = 'home';
   state.paused = true;
-  state.status = `Prestige +${gained}`;
+  state.status = deps.tf ? deps.tf('prestigeStatus', { amount: gained }) : `Prestige +${gained}`;
   refreshDerivedState(state);
   deps.play?.('prestige');
-  deps.notify?.('ach', `♻️ +${gained} prestige`);
+  deps.notify?.('ach', deps.tf ? deps.tf('prestigeToast', { amount: gained }) : `♻️ +${gained} prestige`);
   return true;
 }
 
@@ -548,7 +553,7 @@ function maybeGrantEconomyRelief(state, deps, now) {
   state.tokens += bonus;
   state.stats.earned += bonus;
   state.lastEconomyReliefAt = now;
-  deps.notify?.('info', `Budget patch: +${bonus} tokens`);
+  deps.notify?.('info', deps.tf ? deps.tf('budgetPatch', { amount: bonus }) : `Budget patch: +${bonus} tokens`);
   return true;
 }
 
