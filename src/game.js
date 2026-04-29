@@ -23,6 +23,8 @@ function emptyStats() {
     earned: 0,
     bugsFixed: 0,
     mlHarv: 0,
+    testHarv: 0,
+    orchHarv: 0,
     varHarv: 0,
     planted: 0,
     hackathons: 0,
@@ -327,6 +329,8 @@ export function harvest(state, index, deps) {
   awardXp(state, baseXp, deps);
   state.stats.harvested += 1;
   if (plot.crop === 'ml_model') state.stats.mlHarv += 1;
+  if (plot.crop === 'testing_suite') state.stats.testHarv += 1;
+  if (plot.crop === 'orchestrator') state.stats.orchHarv += 1;
   if (plot.crop === 'variable') state.stats.varHarv += 1;
   if (state.tutorialStep < 2) state.tutorialStep = 2;
   state.plots[index] = createPlot();
