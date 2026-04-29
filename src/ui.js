@@ -45,6 +45,7 @@ function createShell() {
       <main class="main">
         <section class="farmPane">
           <div class="sectionTitle" id="farmTitle"></div>
+          <div id="quickActions" class="quickActions"></div>
           <div class="farmGrid" id="farmGrid"></div>
         </section>
         <aside class="sidePane">
@@ -155,6 +156,20 @@ function renderFarm(state) {
       </button>
     `;
   }).join('');
+}
+
+function renderQuickActions(state) {
+  const readyCount = state.plots.filter(plot => plot.state === 'ready').length;
+  const emptyCount = state.plots.filter(plot => plot.state === 'empty').length;
+  const canPlant = emptyCount > 0 && !!state.inv[state.selectedCrop] && state.inv[state.selectedCrop] > 0;
+  return `
+    <button type="button" class="menuBtn quickBtn" data-action="plantAll" ${canPlant ? '' : 'disabled'}>
+      ${t(state, 'plantAll')}
+    </button>
+    <button type="button" class="menuBtn quickBtn" data-action="harvestReady" ${readyCount > 0 ? '' : 'disabled'}>
+      ${t(state, 'harvestReady')} (${readyCount})
+    </button>
+  `;
 }
 
 function renderTabs(state) {
@@ -579,6 +594,7 @@ export function createUI(root, api) {
     root.querySelector('#farmTitle').textContent = `${t(state, 'title')} // ${state.farmCols}×${state.farmCols}`;
     root.querySelector('#farmGrid').style.gridTemplateColumns = `repeat(${state.farmCols}, minmax(0, 1fr))`;
     root.querySelector('#seedTitle').textContent = `${t(state, 'shop')} // ${cropLabel(CROPS[state.selectedCrop], state.settings.language)}`;
+    root.querySelector('#quickActions').innerHTML = renderQuickActions(state);
     root.querySelector('#farmGrid').innerHTML = renderFarm(state);
     root.querySelector('#seedGrid').innerHTML = renderSeedGrid(state);
     root.querySelector('#seedInfo').innerHTML = renderSeedInfo(state);

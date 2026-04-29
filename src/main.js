@@ -1,5 +1,5 @@
 import { createAudioEngine } from './audio.js';
-import { createDefaultState, applySaveTimestamp, buySeed, buyUpgrade, claimContract, claimGoal, closeMenu, createStateSummary, dismissTutorial, fixBug, harvest, maybeTriggerEvent, normalizeState, openMenu, plant, prestigeReset, refreshDerivedState, setActiveTab, setLanguage, setSelectedCrop, setVolume, tick, togglePause, chooseEvent } from './game.js';
+import { createDefaultState, applySaveTimestamp, buySeed, buyUpgrade, claimContract, claimGoal, closeMenu, createStateSummary, dismissTutorial, fixBug, harvest, harvestReadyPlots, maybeTriggerEvent, normalizeState, openMenu, plant, plantSelectedCropInEmptyPlots, prestigeReset, refreshDerivedState, setActiveTab, setLanguage, setSelectedCrop, setVolume, tick, togglePause, chooseEvent } from './game.js';
 import { deleteSlot, exportSave, importSave, listSlots, loadSlot, saveSlot } from './storage.js';
 import { createUI } from './ui.js';
 import { t, tf } from './i18n.js';
@@ -49,6 +49,18 @@ const ui = createUI(root, {
         persistState();
         break;
       }
+      case 'plantAll':
+        if (plantSelectedCropInEmptyPlots(state, hooks)) {
+          requestRender();
+          persistState();
+        }
+        break;
+      case 'harvestReady':
+        if (harvestReadyPlots(state, hooks)) {
+          requestRender();
+          persistState();
+        }
+        break;
       case 'selectCrop':
         setSelectedCrop(state, data.crop);
         requestRender();

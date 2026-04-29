@@ -290,7 +290,7 @@ function applyReward(state, reward, deps) {
     state.hackathonBonus = true;
     state.stats.hackathons += 1;
   }
-  if (reward.harvestAll) state.plots.forEach((plot, index) => { if (plot.state === 'ready') harvest(state, index, deps); });
+  if (reward.harvestAll) harvestReadyPlots(state, deps);
   if (typeof reward.refactorMinutes === 'number') state.refactorUntil = Date.now() + reward.refactorMinutes * 60_000;
   if (typeof reward.linterBoost === 'number') state.bugShieldUntil = Date.now() + reward.linterBoost * 5 * 60_000;
   if (typeof reward.prestige === 'number') state.prestige += reward.prestige;
@@ -340,6 +340,42 @@ export function harvest(state, index, deps) {
   deps.play?.('harvest');
   checkAchievements(state, deps);
   refreshDerivedState(state);
+}
+
+export function harvestReadyPlots(state, deps) {
+  const readyIndexes = state.plots.reduce((indexes, plot, index) => {
+    if (plot.state === 'ready') indexes.push(index);
+    return indexes;
+  }, []);
+  readyIndexes.forEach(index => harvest(state, index, deps));
+  if (readyIndexes.length) {
+    state.status = deps.tf
+      ? deps.tf('harvestedManyStatus', { count: readyIndexes.length })
+      : `${readyIndexes.length} plots harvested`;
+  }
+  return readyIndexes.length;
+}
+
+export function plantSelectedCropInEmptyPlots(state, deps) {
+  const cropId = state.selectedCrop;
+  const crop = CROPS[cropId];
+  if (!crop) return 0;
+  const emptyIndexes = state.plots.reduce((indexes, plot, index) => {
+    if (plot.state === 'empty') indexes.push(index);
+    return indexes;
+  }, []);
+  let planted = 0;
+  for (const index of emptyIndexes) {
+    if (!state.inv[cropId] || state.inv[cropId] <= 0) break;
+    plant(state, index, deps);
+    planted += 1;
+  }
+  if (planted) {
+    state.status = deps.tf
+      ? deps.tf('plantedManyStatus', { count: planted, name: cropLabel(crop, state.settings.language) })
+      : `${planted} plots planted`;
+  }
+  return planted;
 }
 
 export function fixBug(state, index, deps) {
@@ -500,7 +536,7 @@ export function prestigeReset(state, deps) {
   state.tokens = 20;
   state.level = 1;
   state.xp = 0;
-  state.xpToNext = 50;
+  state.xpToNext = getXpRequirement(1);
   state.reputation = 0;
   state.selectedCrop = 'variable';
   state.farmCols = 5;

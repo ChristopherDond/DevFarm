@@ -63,6 +63,8 @@ button { color:inherit; }
 .farmPane::-webkit-scrollbar, .sidePane::-webkit-scrollbar { width:6px; }
 .farmPane::-webkit-scrollbar-thumb, .sidePane::-webkit-scrollbar-thumb { background:var(--b1); border-radius:999px; }
 .sectionTitle { font-size:11px; text-transform:uppercase; letter-spacing:2px; color:var(--t3); margin:0 0 10px; }
+.quickActions { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 10px; }
+.quickBtn { padding:8px 10px; font-size:11px; }
 .farmGrid {
   display:grid; gap:7px; width:100%; max-width:760px; grid-template-columns:repeat(5, minmax(0, 1fr));
 }
