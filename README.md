@@ -4,11 +4,11 @@
 
 DevFarm is a browser-first idle farming game for developers. You plant code-themed crops, harvest tokens, buy upgrades, complete contracts, and progress toward prestige.
 
-## Current release focus (v2.1)
+## Current release focus (v2.5)
 
-- Economy rebalance for smoother Lv.6-Lv.16 progression.
-- UX polish with clearer status indicators and guided tutorial progress.
-- Save migration + QA fixtures for backward compatibility.
+- Smoother progression curve in the early and midgame, with gentler Lv.6-Lv.16 pacing.
+- Expanded midgame and late-game content with new crops, contracts, goals, and achievements.
+- Quality-of-life actions for bulk planting and harvesting to reduce repetitive clicks.
 
 ## Quick start
 

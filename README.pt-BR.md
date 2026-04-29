@@ -4,11 +4,11 @@
 
 DevFarm é um jogo idle de fazenda no navegador, feito para desenvolvedores. Você planta crops com tema de programação, colhe tokens, compra upgrades, completa contratos e progride até o sistema de prestígio.
 
-## Foco da release atual (v2.1)
+## Foco da release atual (v2.5)
 
-- Economia ajustada para deixar a progressão mais suave entre Lv.6 e Lv.16, com menos travas no meio da campanha.
-- UX refinada com indicadores de status mais claros e tutorial guiado mais fácil de acompanhar.
-- Saves antigos continuam compatíveis graças à migração de estado e às fixtures de QA.
+- Progressão mais suave no início e no meio da campanha, com pacing mais leve entre Lv.6 e Lv.16.
+- Conteúdo expandido para o midgame e o endgame, com novos crops, contratos, metas e badges.
+- Ações de qualidade de vida para plantar e colher em massa, reduzindo cliques repetidos.
 
 ## Início rápido
 
