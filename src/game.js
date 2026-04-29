@@ -107,13 +107,17 @@ export function getBugChance(state) {
   return Math.max(0.01, 0.09 - state.upgrades.linter * 0.025 - shield);
 }
 
+function getXpRequirement(level) {
+  return Math.round(50 * Math.pow(1.37, Math.max(0, level - 1)));
+}
+
 export function createDefaultState() {
   return {
     version: VERSION,
     tokens: 20,
     level: 1,
     xp: 0,
-    xpToNext: 50,
+    xpToNext: getXpRequirement(1),
     prestige: 0,
     reputation: 0,
     farmSize: 25,
@@ -254,7 +258,7 @@ function awardXp(state, amount, deps) {
   while (state.xp >= state.xpToNext) {
     state.xp -= state.xpToNext;
     state.level += 1;
-    state.xpToNext = Math.round(50 * Math.pow(1.39, state.level - 1));
+    state.xpToNext = getXpRequirement(state.level);
     leveled = true;
     deps.notify?.('ok', `${deps.t('levelShort')} ${state.level}`);
     Object.values(CROPS).forEach(crop => {
@@ -545,11 +549,11 @@ export function getTutorialProgress(state) {
 
 function maybeGrantEconomyRelief(state, deps, now) {
   const seedStock = Object.values(state.inv || {}).reduce((acc, qty) => acc + (Number(qty) || 0), 0);
-  const needsRelief = state.level >= 6 && state.level <= 16 && state.tokens < 25 && seedStock <= 1;
+  const needsRelief = state.level >= 6 && state.level <= 16 && state.tokens < 30 && seedStock <= 2;
   if (!needsRelief) return false;
-  if (now - state.lastEconomyReliefAt < 120000) return false;
+  if (now - state.lastEconomyReliefAt < 90000) return false;
 
-  const bonus = Math.round(20 + state.level * 3);
+  const bonus = Math.round(28 + state.level * 4);
   state.tokens += bonus;
   state.stats.earned += bonus;
   state.lastEconomyReliefAt = now;
